@@ -1,0 +1,74 @@
+1	Hand	Human
+2	Ear	Human
+3	
+4	Chef	Human
+5	Hair	Human
+6	Dance	Human
+7	
+8
+9	Eye	Human
+10	
+11	
+12	
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25	Armadillo	Animal
+26	Camel	Animal
+27	Snake	Animal
+28	Wolf	Animal
+29	Monkey	Animal
+30	Ostrich	Animal
+31	
+32	Zebra	Animal
+33	Elephant	Animal
+34	
+35	Sheep	Animal
+36	Frog	Animal
+37	Cattle	Animal
+38	Goat	Animal
+
+39	
+40	
+41	Dog	Animal
+
+42
+43	
+44
+45	Lizard	Animal
+46	Giraffe	Animal
+47	Lion	Animal
+48
+49	Grape	Fruit
+50	Potato	Fruit
+51	Chili_pepper	Fruit
+52	Lettuce	Fruit
+53	Zucchini	Fruit
+54	Radish	Fruit
+55	Eggplant	Fruit
+56	Banana	Fruit
+57	Garlic	Fruit
+58	Pineapple	Fruit
+59	Pear	Fruit
+60	Capsicum	Fruit
+61	Baby_bottle	Object
+62	Electric_light	Object
+63	Cassette_tape	Object
+64	Flag	Japan	Object
+65	Lock_and_key	Object
+66	Pliers	Object
+67	Hammer	Object
+68	Chair	Object
+69	Gun	Object
+70	Umbrella	Object
+71	Telephone	Object
+72	Stove	Object

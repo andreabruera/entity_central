@@ -1,0 +1,150 @@
+f001.bmp	Jennifer Lopez	Actor	F
+f002.bmp	Rod Stewart	Musician	M
+f003.bmp	Uma Thurman	Actor	F
+f004.bmp	Rowan Atkinson	Television show	M
+f005.bmp	Phoebe Buffay	Television show	F   Lisa Kudrow
+f006.bmp	Nicolas Cage	Actor	M
+f007.bmp	Winona Ryder	Actor	F
+f008.bmp	Robert Carlyle	Actor
+f009.bmp	Gwyneth Paltrow	Actor	F
+f010.bmp	Jim Carrey	Actor	M
+f011.bmp	Mariah Carey	Musician
+f012.bmp	George Clooney	Actor	M
+f013.bmp	
+f014.bmp	Sean Connery	Actor	M
+f015.bmp	Cindy Crawford	Model (person)
+f016.bmp	Billy Connolly	Television show
+f017.bmp	Meg Ryan	Actor
+f018.bmp	Arnold Schwarzenegger	Actor	M
+f019.bmp	
+f020.bmp	Michael Schumacher	Athlete	M
+f021.bmp	Gillian Anderson	Television show
+f022.bmp	Leonardo DiCaprio	Actor	M
+f023.bmp	
+f024.bmp	
+f025.bmp	Claudia Schiffer	Model (person)
+f026.bmp	Bill Clinton	Politician	M
+f027.bmp	
+f028.bmp	David Jason	Television show
+f029.bmp	Elizabeth Hurley	Actor
+f030.bmp	
+f031.bmp	Sarah, Duchess of York	Politician
+f032.bmp	Prince William, Duke of Cambridge	Politician	M
+f033.bmp	Jennifer Aniston	Actor	F
+f034.bmp	Tom Hanks	Actor	M
+f035.bmp	
+f036.bmp	
+f037.bmp	
+f038.bmp	Robert De Niro	Actor	M
+f039.bmp	Kylie Minogue	Musician
+f040.bmp	Richard Gere	Actor	M
+f041.bmp	Calista Flockhart	Actor
+f042.bmp	Richard Branson	Politician	
+f043.bmp	Joanna Lumley	Television show
+f044.bmp	Pierce Brosnan	Actor	M
+f045.bmp	Goldie Hawn	Actor
+f046.bmp	Paul McCartney	Musician	M
+f047.bmp	Madonna (entertainer)	Musician	F
+f048.bmp	Michael Douglas	Actor
+f049.bmp
+f050.bmp	Tom Cruise	Actor	M
+f051.bmp	Kate Moss	Actor	F
+f052.bmp	Joey Tribbiani	Television show	M   Matt LeBlanc
+f053.bmp	Marilyn Monroe	Actor	F
+f054.bmp	Mel Gibson	Actor	M
+f055.bmp	Buffy Summers	Television show
+f056.bmp	Sylvester Stallone	Actor	M
+f057.bmp	Diana, Princess of Wales	Politician	F
+f058.bmp	Kevin Costner	Actor	M
+f059.bmp	
+f060.bmp	Keanu Reeves	Actor	M
+f061.bmp	Margaret Thatcher	Politician	F
+f062.bmp	John Travolta	Actor	M
+f063.bmp	Demi Moore	Actor
+f064.bmp	John Lennon	Musician	M
+f065.bmp	Cameron Diaz	Actor	F
+f066.bmp	Robbie Williams	Musician	M
+f067.bmp	Victoria Beckham	Musician
+f068.bmp	John Cleese	Actor	M
+f069.bmp	Michelle Pfeiffer	Actor
+f070.bmp	Harrison Ford	Actor	M
+f071.bmp	Cherie Blair	Politician	
+f072.bmp	Elvis Presley	Actor	M
+f073.bmp	
+f074.bmp	
+f075.bmp	Kate Winslet	Actor
+f076.bmp	
+f077.bmp	Minnie Driver	Actor
+f078.bmp	Dustin Hoffman	Actor	M
+f079.bmp	Sharon Stone	Actor
+f080.bmp	Danny DeVito	Actor	M
+f081.bmp	Julia Roberts	Actor	F
+f082.bmp	Clint Eastwood	Actor	M
+f083.bmp	Jodie Foster	Actor	F
+f084.bmp	
+f085.bmp	Nicole Kidman	Actor	F
+f086.bmp	Brad Pitt	Actor	M
+f087.bmp	Vanessa Feltz	Television show	
+f088.bmp	Hugh Grant	Actor	M
+f089.bmp	Elizabeth Taylor	Actor
+f090.bmp	David Beckham	Athlete	M
+f091.bmp	Robert Redford	Actor	
+f092.bmp	
+f093.bmp	Mo Mowlam	Politician
+f094.bmp	Gary Lineker	Athlete
+f095.bmp	
+f096.bmp	Ronald Reagan	Politician	M
+f097.bmp	
+f098.bmp	Ricky Martin	Musician	M
+f099.bmp	
+f100.bmp	
+f101.bmp	Hillary Clinton	Politician	F
+f102.bmp	
+f103.bmp	
+f104.bmp	Graham Norton	Television show
+f105.bmp	Steffi Graf	Athlete
+f106.bmp	Liam Neeson	Actor	M
+f107.bmp	Drew Barrymore	Actor
+f108.bmp	
+f109.bmp	Monica Geller	Actor	F   Courteney Cox
+f110.bmp	Austin Powers	Actor	M   Myke Myers
+f111.bmp	
+f112.bmp	
+f113.bmp	
+f114.bmp	Noel Gallagher	Musician	M
+f115.bmp	
+f116.bmp	Gordon Brown	Politician
+f117.bmp	Ewan McGregor	Actor	M
+f118.bmp	Barbra Streisand	Musician	
+f119.bmp	Gene Hackman	Actor
+f120.bmp	George Michael	Musician
+f121.bmp	
+f122.bmp	
+f123.bmp	Jeff Goldblum	Actor	
+f124.bmp	
+f125.bmp	Jeremy Irons	Actor	M
+f126.bmp	Jamie Lee Curtis	Actor
+f127.bmp	Kevin Spacey	Actor	M
+f128.bmp	
+f129.bmp	Britney Spears	Musician	F
+f130.bmp	
+f131.bmp	Charles, Prince of Wales	Politician	M
+f132.bmp	
+f133.bmp	Robin Williams	Actor	M
+f134.bmp	
+f135.bmp	
+f136.bmp	
+f137.bmp	Woody Allen	Actor	M
+f138.bmp	
+f139.bmp	Judi Dench	Actor	F
+f140.bmp	
+f141.bmp	Kathy Bates	Actor
+f142.bmp	Linda Hamilton	Actor
+f143.bmp	Liv Tyler	Actor	F
+f144.bmp	Meryl Streep	Actor	F
+f145.bmp	Oprah Winfrey	Television show	
+f146.bmp	Reese Witherspoon	Actor
+f147.bmp	Sandra Bullock	Actor
+f148.bmp	
+f149.bmp	
+f150.bmp	Whoopi Goldberg	Actor	F

@@ -1,0 +1,10 @@
+Stonehenge	Monument	Q39671
+Birmingham	City	Q2256
+River Thames	River	Q19686
+Snowdonia	Mountain	Q867913
+Scotland	Country	Q22
+Shoreditch	District	Q1027127
+Isle of Skye	Island	Q107393
+Canterbury Cathedral	Church	Q29265
+Cornwall	County	Q23148
+Loch Ness	Lake	Q49650
