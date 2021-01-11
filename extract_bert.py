@@ -19,16 +19,17 @@ def vector_to_txt(word, vector, output_file):
 
 # Create multiple vectors for Bert clustering analysis
 
-def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/word_vectors/bert_4_layers'):
+def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/word_vectors/bert_layers_1_to_4'):
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
     bert_model = BertModel.from_pretrained('bert-base-cased')
 
-    bert_vectors = collections.defaultdict(list)       
 
     ### Extracting the BERT vectors
     for extraction_method in ['unmasked', 'full_sentence', 'masked']:
+
         print('Now extracting the vectors in modality {}'.format(extraction_method))
+        bert_vectors = collections.defaultdict(list)       
         extraction_method_folder = os.path.join(out_folder, extraction_method)
         os.makedirs(extraction_method_folder, exist_ok=True)
 
@@ -101,11 +102,10 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
                     sentence_vector = numpy.average(word_layers, axis=0)
                     assert len(sentence_vector) == 768
                     bert_vectors[entity].append((sentence, sentence_vector))
-                else:
-                    print(sentence)
 
-            for entity, vector_tuples in bert_vectors.items():
+        print('Now writing vectors to file...')
+        for entity, vector_tuples in tqdm(bert_vectors.items()):
 
-                with open(os.path.join(extraction_method_folder, '{}.vec'.format(re.sub(' ', '_', entity))), 'w') as o:
-                    for sentence, vector in vector_tuples:
-                        vector_to_txt(sentence, vector, o)
+            with open(os.path.join(extraction_method_folder, '{}.vec'.format(re.sub(' ', '_', entity))), 'w') as o:
+                for sentence, vector in vector_tuples:
+                    vector_to_txt(sentence, vector, o)

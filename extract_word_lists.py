@@ -77,12 +77,12 @@ class Entities:
         with open('resources/men.txt', 'r') as men_file:
             all_lines = [l.split()[:2] for l in men_file.readlines()]
         all_words = [final_w for final_w in {re.sub('_.', '', w) : '' for l in all_lines for w in l}.keys()]
-        men_words = {w : ('Unknown', 'Unknown') for w in all_words}
+        men_words = {w.capitalize() : ('Unknown', 'Unknown') for w in all_words}
         return men_words
 
     def stopwords(self):
         words = []
         with open('resources/stopwords.txt', 'r') as stopwords_file:
             all_words = [l.strip('\n' ) for l in stopwords_file.readlines()[1:] if len(l) >= 5]
-        stopwords = {w : ('Unknown', 'Unknown') for w in all_words}
-        return men_words
+        stopwords = {w.capitalize() : ('Unknown', 'Unknown') for w in all_words}
+        return stopwords
