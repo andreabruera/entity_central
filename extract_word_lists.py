@@ -8,20 +8,35 @@ class Entities:
     def __init__(self, required_words):
 
         self.base_folder = '/import/cogsci/andrea/github/names_count'
+        self.word_set = required_words
 
-        if required_words == 'wakeman_henson':
+        if self.word_set == 'wakeman_henson':
             self.words = self.wakeman_henson()
-        elif required_words == 'full_wiki':
+        elif self.word_set == 'full_wiki':
             self.words = self.full_wiki()
-        elif required_words == 'men':
+        elif self.word_set == 'men':
             self.words = self.men()
-        elif required_words == 'eeg_stanford':
+        elif self.word_set == 'eeg_stanford':
             self.words = self.eeg_stanford()
-        elif required_words == 'mitchell':
+        elif self.word_set == 'mitchell':
             self.words = self.mitchell()
-        elif required_words == 'stopwords':
+        elif self.word_set == 'stopwords':
             self.words = self.stopwords()
 
+        self.word_categories = self.expand_word_categories()
+
+    def expand_word_categories(self):
+
+        if self.word_set == 'full_wiki' or self.word_set == 'wakeman_henson':
+            entities_list = {ent : 'ent' for ent in self.words.keys()}
+        else:
+            entities_list = {ent : 'cat' for ent in self.words.keys() if re.sub('[0-9]', '', ent) != ''}
+        fine_list = {cat[0] : 'cat' for ent, cat in self.words.items() if cat[0] != 'Unknown'}
+        coarse_list = {cat[1] : 'cat' for ent, cat in self.words.items() if cat[0] != 'Unknown'}
+
+        expanded_word_categories = {**entities_list, **fine_list, **coarse_list}
+
+        return expanded_word_categories
        
     def wakeman_henson(self):
         with open('resources/wakeman_henson_stimuli.txt') as input_file:
@@ -63,7 +78,7 @@ class Entities:
                     if len(l) > 3:
                         try:
                             coarse = l[2]
-                            mapping = {'Fictional' : 'Character (arts)', 'Neighborhood' : 'Neighbourhood','Sports' : 'Athlete', 'Lake' : 'Body of water', 'Sea' : 'Body of water', 'River' : 'Body of water'}
+                            mapping = {'Fictional' : 'Character (arts)', 'Neighborhood' : 'Neighbourhood','Sports' : 'Athlete', 'Lake' : 'Body of water', 'Sea' : 'Body of water', 'River' : 'Body of water', 'Music' : 'Musician', 'Literature' : 'Writer', 'Politics' : 'Politician', 'Film' : 'Actor', 'Sports' : 'Athlete'}
                             #finer_cat = l[3] if l[3] != 'Sea' and l[3] != 'River' and l[3] != 'Lake' else 'Body of water'
                             fine = l[3] if l[3] not in mapping.keys() else mapping[l[3]]
                             words_and_cats[name] = (fine, coarse)

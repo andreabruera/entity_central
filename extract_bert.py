@@ -6,8 +6,20 @@ import numpy
 import argparse
 import nltk
 
-from transformers import BertModel, BertTokenizer
+from transformers import BertModel, BertTokenizer, BertForMaskedLM
 from tqdm import tqdm
+
+def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=100):
+
+    predictions = list()
+
+    for index in relevant_indices:
+        index = index[0]
+        pure_logits = [(k, v) for k, v in enumerate(outputs.logits[0, index].tolist())]
+        sorted_logits = sorted(pure_logits, key=lambda item : item[1], reverse=True)[:topn]
+        predictions.append([bert_tokenizer._convert_id_to_token(k) for k, v in sorted_logits])
+
+    return predictions
 
 def vector_to_txt(word, vector, output_file):
     output_file.write('{}\t'.format(word))
@@ -19,14 +31,16 @@ def vector_to_txt(word, vector, output_file):
 
 # Create multiple vectors for Bert clustering analysis
 
-def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/word_vectors/bert_layers_1_to_4'):
+def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/word_vectors/bert'):
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-    bert_model = BertModel.from_pretrained('bert-base-cased')
+    #bert_model = BertModel.from_pretrained('bert-base-cased')
+    bert_model = BertForMaskedLM.from_pretrained('bert-base-cased')
 
 
     ### Extracting the BERT vectors
-    for extraction_method in ['unmasked', 'full_sentence', 'masked']:
+    #for extraction_method in ['unmasked', 'full_sentence', 'masked']:
+    for extraction_method in ['facets']:
 
         print('Now extracting the vectors in modality {}'.format(extraction_method))
         bert_vectors = collections.defaultdict(list)       
@@ -39,10 +53,16 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
 
             for sentence in sentences:
 
+                ### Removing tabs otherwise they will interfere when reading the vectors from txt
+                sentence = re.sub('\t', ' ', sentence)
+
                 if extraction_method == 'masked':
                     sentence = re.sub('\[SEP\].+\[SEP\]', '[MASK]', sentence)
+                elif extraction_method == 'facets':
+                    sentence =  '{} This describes the [MASK].'.format(sentence)
                 elif extraction_method == 'full_sentence':
                     sentence = re.sub('\[SEP\] ', '', sentence)
+
 
                 input_ids = bert_tokenizer(sentence, return_tensors='pt')
                 readable_input_ids = input_ids['input_ids'][0].tolist()
@@ -78,30 +98,35 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
                             except AssertionError:
                                 print('There was a problem with this sentence: {}'.format(sentence))
 
-                    elif extraction_method == 'masked':
+                    elif extraction_method == 'masked' or extraction_method == 'facets':
                         relevant_indices = [[i] for i, input_id in enumerate(readable_input_ids) if input_id == 103]
 
                     elif extraction_method == 'full_sentence':
                         relevant_indices = [[i for i in range(1, len(readable_input_ids)-1)]]
-                   
                     outputs = bert_model(**input_ids, return_dict=True, output_hidden_states=True, output_attentions=False)
-
                     assert len(readable_input_ids) == len(outputs['hidden_states'][1][0])
                     assert len(relevant_indices) >= 1
-                    word_layers = list()
 
-                    ### Using the first 4 layers in BERT
-                    for layer in range(1, 5):
-                        layer_container = list()
-                        for relevant_index_list in relevant_indices:
-                            for individual_index in relevant_index_list:
-                                layer_container.append(outputs['hidden_states'][layer][0][individual_index].detach().numpy())
-                        layer_container = numpy.average(layer_container, axis=0)
-                        assert len(layer_container) == 768
-                        word_layers.append(layer_container)
-                    sentence_vector = numpy.average(word_layers, axis=0)
-                    assert len(sentence_vector) == 768
-                    bert_vectors[entity].append((sentence, sentence_vector))
+                    if extraction_method == 'facets':
+                        preds = get_logit_predictions(outputs, bert_tokenizer, relevant_indices)
+                        bert_vectors[entity].append((sentence, preds))
+
+                    else:
+
+                        word_layers = list()
+
+                        ### Using the first 4 layers in BERT
+                        for layer in range(1, 5):
+                            layer_container = list()
+                            for relevant_index_list in relevant_indices:
+                                for individual_index in relevant_index_list:
+                                    layer_container.append(outputs['hidden_states'][layer][0][individual_index].detach().numpy())
+                            layer_container = numpy.average(layer_container, axis=0)
+                            assert len(layer_container) == 768
+                            word_layers.append(layer_container)
+                        sentence_vector = numpy.average(word_layers, axis=0)
+                        assert len(sentence_vector) == 768
+                        bert_vectors[entity].append((sentence, sentence_vector))
 
         print('Now writing vectors to file...')
         for entity, vector_tuples in tqdm(bert_vectors.items()):

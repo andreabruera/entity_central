@@ -7,23 +7,15 @@ import tqdm
 
 from tqdm import tqdm
 
-def read_sentences(entities_dict, all_common_nouns=False):
+def read_sentences(entities_dict):
 
     spacy_model = spacy.load("en_core_web_sm")
-
-    entities_list = {ent : 'ent' for ent in entities_dict.keys()}
-    if all_common_nouns:
-        entities_list = {ent : 'cat' for ent in entities_dict.keys() if re.sub('[0-9]', '', ent) != ''}
-    fine_list = {cat[0] : 'cat' for ent, cat in entities_dict.items() if cat[0] != 'Unknown'}
-    coarse_list = {cat[1] : 'cat' for ent, cat in entities_dict.items() if cat[0] != 'Unknown'}
-
-    all_words = {**entities_list, **fine_list, **coarse_list}
 
     ### Generating paths to each word Wikipedia page file
     word_paths = collections.defaultdict(str)
     print('Now generating the path for the files...')
 
-    for current_word, word_type in tqdm(all_words.items()):
+    for current_word, word_type in tqdm(entities_dict.items()):
 
         file_current_word = re.sub(' ', '_', current_word)
         txt_file = '{}.txt'.format(file_current_word)
@@ -60,7 +52,7 @@ def read_sentences(entities_dict, all_common_nouns=False):
 
     for current_word, current_lines in tqdm(word_wiki_sentences.items()):
 
-        current_cat = all_words[current_word]
+        current_cat = entities_dict[current_word]
 
         if current_cat == 'ent':
 
