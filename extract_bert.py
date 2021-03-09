@@ -5,11 +5,12 @@ import torch
 import numpy
 import argparse
 import nltk
+import math
 
 from transformers import BertModel, BertTokenizer, BertForMaskedLM
 from tqdm import tqdm
 
-def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=100):
+def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=40):
 
     predictions = list()
 
@@ -17,7 +18,16 @@ def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=100):
         index = index[0]
         pure_logits = [(k, v) for k, v in enumerate(outputs.logits[0, index].tolist())]
         sorted_logits = sorted(pure_logits, key=lambda item : item[1], reverse=True)[:topn]
-        predictions.append([bert_tokenizer._convert_id_to_token(k) for k, v in sorted_logits])
+        sorted_norm = math.sqrt(sum([float(v)*float(v) for k, v in sorted_logits]))
+        normalized_substitutes = [[bert_tokenizer._convert_id_to_token(k), (float(v)/sorted_norm)*.1] for k, v in sorted_logits]
+        
+        sum_logits = sum([v[1] for v in normalized_substitutes])
+        assert sum_logits <= 1.
+        residue = (1. - sum_logits)/len(normalized_substitutes)
+        final_predictions = ['{}_{}'.format(v[0], v[1]+residue) for v in normalized_substitutes]
+        sum_logits = sum([float(v.split('_')[1]) for v in final_predictions])
+        assert sum_logits <= 1.05
+        predictions.append(final_predictions)
 
     return predictions
 
@@ -59,7 +69,10 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
                 if extraction_method == 'masked':
                     sentence = re.sub('\[SEP\].+\[SEP\]', '[MASK]', sentence)
                 elif extraction_method == 'facets':
-                    sentence =  '{} This describes the [MASK].'.format(sentence)
+                    #sentence = re.sub('\[SEP\].+?\[SEP\]', '[MASK]', sentence)
+                    sentence = re.sub('\[SEP\](.+?)\[SEP\]', r'\1, as a [MASK],', sentence)
+                    #sentence = re.sub('\[SEP\]', '', sentence)
+                    #sentence =  '{} This describes the [MASK].'.format(sentence)
                 elif extraction_method == 'full_sentence':
                     sentence = re.sub('\[SEP\] ', '', sentence)
 
@@ -109,7 +122,10 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
 
                     if extraction_method == 'facets':
                         preds = get_logit_predictions(outputs, bert_tokenizer, relevant_indices)
-                        bert_vectors[entity].append((sentence, preds))
+                        for pred in preds:
+                            #bert_vectors[entity].append((sentence, preds))
+                            bert_vectors[entity].append((sentence, pred))
+                            #import pdb; pdb.set_trace()
 
                     else:
 

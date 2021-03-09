@@ -15,6 +15,7 @@ def read_sentences(entities_dict):
     word_paths = collections.defaultdict(str)
     print('Now generating the path for the files...')
 
+    c=0
     for current_word, word_type in tqdm(entities_dict.items()):
 
         file_current_word = re.sub(' ', '_', current_word)
@@ -27,7 +28,11 @@ def read_sentences(entities_dict):
             short_folder = current_word[:2]
             file_name = os.path.join('/import/cogsci/andrea/dataset/corpora/wikipedia_article_by_article', short_folder, txt_file)
 
-        word_paths[current_word] = file_name
+        if c<5: ### Just for debugging
+            #c+=1
+            word_paths[current_word] = file_name
+        else:
+            break
 
     ### Reading the list of sentences from the file
     word_wiki_sentences = collections.defaultdict(list)
