@@ -32,9 +32,14 @@ class EntityVectors:
         try:
             with open(os.path.join(path, entity_file_name)) as entity_file:
                 entity_lines = [l.strip().split('\t')[1:] for l in entity_file.readlines()]
-            entity_vectors = [numpy.array([value for value in l if not re.search('[a-z]+.+[a-z]+', value)], dtype=numpy.single) for l in entity_lines]
-            for v in entity_vectors:
-                assert len(v) == 768
+            if 'facet' not in self.extraction_mode:
+                entity_vectors = [numpy.array([value for value in l if not re.search('[a-z]+.+[a-z]+', value)], dtype=numpy.single) for l in entity_lines]
+                for v in entity_vectors:
+                    assert len(v) == 768
+            else:
+                entity_vectors = entity_lines.copy()
+                for v in entity_vectors:
+                    assert len(v) == 40
             ### reducing the amount of vectors to max_number
             entity_vectors = entity_vectors[:self.max_number]
 
