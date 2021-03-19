@@ -18,15 +18,12 @@ def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=40):
         index = index[0]
         pure_logits = [(k, v) for k, v in enumerate(outputs.logits[0, index].tolist())]
         sorted_logits = sorted(pure_logits, key=lambda item : item[1], reverse=True)[:topn]
-        sorted_norm = math.sqrt(sum([float(v)*float(v) for k, v in sorted_logits]))
-        normalized_substitutes = [[bert_tokenizer._convert_id_to_token(k), (float(v)/sorted_norm)*.1] for k, v in sorted_logits]
+        l2_norm = math.sqrt(sum([float(v)*float(v) for k, v in sorted_logits]))
+        l1_norm = sum([v for k, v in sorted_logits])
+        normalized_substitutes = [[bert_tokenizer._convert_id_to_token(k), (float(v)/l1_norm)] for k, v in sorted_logits]
         
-        sum_logits = sum([v[1] for v in normalized_substitutes])
-        assert sum_logits <= 1.
-        residue = (1. - sum_logits)/len(normalized_substitutes)
-        final_predictions = ['{}_{}'.format(v[0], v[1]+residue) for v in normalized_substitutes]
-        sum_logits = sum([float(v.split('_')[1]) for v in final_predictions])
-        assert sum_logits <= 1.05
+        assert sum[v for k, v in normalized_substitutes.items()] <= 1.05
+        final_predictions = ['{}_{}'.format(v[0], v[1]) for v in normalized_substitutes]
         predictions.append(final_predictions)
 
     return predictions
