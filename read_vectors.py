@@ -37,6 +37,7 @@ class EntityVectors:
                 for v in entity_vectors:
                     assert len(v) == 768
             else:
+                self.max_number = 500
                 entity_vectors = entity_lines.copy()
                 for v in entity_vectors:
                     assert len(v) == 40
