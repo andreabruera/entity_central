@@ -22,7 +22,7 @@ def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=40):
         l1_norm = sum([v for k, v in sorted_logits])
         normalized_substitutes = [[bert_tokenizer._convert_id_to_token(k), (float(v)/l1_norm)] for k, v in sorted_logits]
         
-        assert sum[v for k, v in normalized_substitutes.items()] <= 1.05
+        assert sum([v for k, v in normalized_substitutes.items()]) <= 1.05
         final_predictions = ['{}_{}'.format(v[0], v[1]) for v in normalized_substitutes]
         predictions.append(final_predictions)
 
@@ -46,8 +46,8 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
 
 
     ### Extracting the BERT vectors
-    #for extraction_method in ['unmasked', 'full_sentence', 'masked']:
-    for extraction_method in ['facets']:
+    for extraction_method in ['unmasked', 'full_sentence', 'facets', 'masked']:
+    #for extraction_method in ['facets']:
 
         print('Now extracting the vectors in modality {}'.format(extraction_method))
         bert_vectors = collections.defaultdict(list)       

@@ -1,10 +1,13 @@
 import numpy
 import os
 import re
+import sklearn
+
 
 class EntityVectors:
 
     def __init__(self, entities_dict, model_name, extraction_mode, max_number=24):
+
 
         self.model_name = model_name
         self.extraction_mode = extraction_mode
@@ -37,8 +40,8 @@ class EntityVectors:
                 for v in entity_vectors:
                     assert len(v) == 768
             else:
-                self.max_number = 500
-                entity_vectors = entity_lines.copy()
+                entity_vectors = [{v.split('_')[0] : float(v.split('_')[1]) for v in vec} for vec in entity_lines]
+                
                 for v in entity_vectors:
                     assert len(v) == 40
             ### reducing the amount of vectors to max_number

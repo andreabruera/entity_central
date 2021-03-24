@@ -10,7 +10,9 @@ class Entities:
         self.base_folder = '/import/cogsci/andrea/github/names_count'
         self.word_set = required_words
 
-        if self.word_set == 'wakeman_henson':
+        if self.word_set == 'wikisrs':
+            self.words = self.wikisrs()
+        elif self.word_set == 'wakeman_henson':
             self.words = self.wakeman_henson()
         elif self.word_set == 'full_wiki':
             self.words = self.full_wiki()
@@ -27,7 +29,7 @@ class Entities:
 
     def expand_word_categories(self):
 
-        if self.word_set == 'full_wiki' or self.word_set == 'wakeman_henson':
+        if self.word_set == 'full_wiki' or self.word_set == 'wakeman_henson' or self.word_set == 'wikisrs':
             entities_list = {ent : 'ent' for ent in self.words.keys()}
         else:
             entities_list = {ent : 'cat' for ent in self.words.keys() if re.sub('[0-9]', '', ent) != ''}
@@ -37,6 +39,19 @@ class Entities:
         expanded_word_categories = {**entities_list, **fine_list, **coarse_list}
 
         return expanded_word_categories
+
+    def wikisrs(self):
+
+        with open('resources/WikiSRS/WikiSRS_similarity.csv') as input_file:
+            lines = [l.strip().split('\t')[2:5] for l in input_file.readlines()][1:]
+        words_sim = list(set([l[i] for l in lines for i in range(2)]))
+        with open('resources/WikiSRS/WikiSRS_relatedness.csv') as input_file:
+            lines = [l.strip().split('\t')[2:5] for l in input_file.readlines()][1:]
+        words_rel = list(set([l[i] for l in lines for i in range(2)]))
+        words_final = set(words_rel + words_sim)
+        names_and_cats = {w : ('Unknown', 'Unknown') for w in words_final}
+
+        return names_and_cats
        
     def wakeman_henson(self):
         with open('resources/wakeman_henson_stimuli.txt') as input_file:
