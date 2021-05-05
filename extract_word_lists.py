@@ -22,6 +22,8 @@ class Entities:
             self.words = self.eeg_stanford()
         elif self.word_set == 'mitchell':
             self.words = self.mitchell()
+        elif self.word_set == 'eeg_one':
+            self.words = self.eeg_one()
         elif self.word_set == 'stopwords':
             self.words = self.stopwords()
 
@@ -42,6 +44,13 @@ class Entities:
 
     def wikisrs(self):
 
+        wikisrs_mapping = {'Fyodor Dostoyevsky' : 'Fyodor Dostoevsky', 
+                           'Ken Griffey, Jr.' : 'Ken Griffey Jr.',
+                           'Martin van Buren' : 'Martin Van Buren',
+                           'Libertarian Party' : 'Libertarian_Party_(United_States).txt',
+                           'Green Party' : 'Green_Party_of_the_United_States.txt', 
+                           'Technical University Munich' : 'Technical_University_of_Munich.txt',
+                          }
         with open('resources/WikiSRS/WikiSRS_similarity.csv') as input_file:
             lines = [l.strip().split('\t')[2:5] for l in input_file.readlines()][1:]
         words_sim = list(set([l[i] for l in lines for i in range(2)]))
@@ -68,6 +77,20 @@ class Entities:
         words_and_cats = {l[1] : (l[2], 'Unknown') for l in lines}
         #mapping_dictionary = {'Object' : 'Physical object', 'Japan' : 'Physical object'}
         #words_and_cats = {k : mapping_dictionary[v] if v in mapping_dictionary.keys() else v for k, v in words_and_cats.items()}
+
+        return words_and_cats
+
+    def eeg_one(self):
+
+        with open('resources/exp_one_stimuli.txt') as ids_txt:
+            raw_lines = [l.strip().split('\t')[1:] for l in ids_txt.readlines()][1:]
+        coarse_mapper = {'persona' : 'Person', 'luogo' : 'Place'}
+       
+        fine_mapper = {'musicista' : 'Musician', 'attore' : 'Actor', \
+                       'politico' : 'Politician', 'scrittore' : 'Writer', \
+                       'corso d\'acqua' : 'Body of water', 'città' : 'City', \
+                       'monumento' : 'Monument', 'stato' : 'Country'}
+        words_and_cats = {l[0] : (fine_mapper[l[2]], coarse_mapper[l[1]]) for l in lines if l[2] in fine_mapper.keys()}
 
         return words_and_cats
 

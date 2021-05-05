@@ -22,7 +22,7 @@ def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=40):
         l1_norm = sum([v for k, v in sorted_logits])
         normalized_substitutes = [[bert_tokenizer._convert_id_to_token(k), (float(v)/l1_norm)] for k, v in sorted_logits]
         
-        assert sum([v for k, v in normalized_substitutes.items()]) <= 1.05
+        assert sum([v[1] for v in normalized_substitutes]) <= 1.05
         final_predictions = ['{}_{}'.format(v[0], v[1]) for v in normalized_substitutes]
         predictions.append(final_predictions)
 

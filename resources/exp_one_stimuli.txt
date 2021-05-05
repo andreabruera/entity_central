@@ -1,0 +1,101 @@
+Trigger ID	Name	Coarse category	Fine category	Correct mention
+1	Barack Obama	persona	politico	un politico
+2	Boris Johnson	persona	politico	un politico
+3	Angela Merkel	persona	politico	una politica
+4	Hillary Clinton	persona	politico	una politica
+5	Vladimir Putin	persona	politico	un politico
+6	Silvio Berlusconi	persona	politico	un politico
+7	Papa Francesco	persona	politico	un politico
+8	Emmanuel Macron	persona	politico	un politico
+9	Gandhi	persona	politico	un politico
+10	Martin Luther King	persona	politico	un politico
+11	J.K. Rowling	persona	scrittore	una scrittrice
+12	Ernest Hemingway	persona	scrittore	uno scrittore
+13	Umberto Eco	persona	scrittore	uno scrittore
+14	William Shakespeare	persona	scrittore	uno scrittore
+15	Sigmund Freud	persona	scrittore	(anche) uno scrittore
+16	Stephen King	persona	scrittore	uno scrittore
+17	Stephen Hawking	persona	scrittore	uno scrittore
+18	Agatha Christie	persona	scrittore	una scrittrice
+19	Lev Tolstoj	persona	scrittore	uno scrittore
+20	Oscar Wilde	persona	scrittore	uno scrittore
+21	Madonna	persona	musicista	una musicista
+22	Ed Sheeran	persona	musicista	un musicista
+23	Britney Spears	persona	musicista	una musicista
+24	Freddie Mercury	persona	musicista	un musicista
+25	Wolfgang Amadeus Mozart	persona	musicista	un musicista
+26	Rihanna	persona	musicista	una musicista
+27	Bob Dylan	persona	musicista	un musicista
+28	Ray Charles	persona	musicista	un musicista
+29	Eminem	persona	musicista	un musicista
+30	Luciano Pavarotti	persona	musicista	un musicista
+31	Cristiano Ronaldo	persona	atleta	un atleta
+32	Diego Armando Maradona	persona	atleta	un atleta
+33	Michael Jordan	persona	atleta	un atleta
+34	Mike Tyson	persona	atleta	un atleta
+35	Serena Williams	persona	atleta	una atleta
+36	Usain Bolt	persona	atleta	un atleta
+37	Tiger Woods	persona	atleta	un atleta
+38	Roger Federer	persona	atleta	un atleta
+39	Zlatan Ibrahimovic	persona	atleta	un atleta
+40	Lewis Hamilton	persona	atleta	un atleta
+41	Brad Pitt	persona	attore	un attore
+42	Robert De Niro	persona	attore	un attore
+43	Angelina Jolie	persona	attore	una attrice
+44	Woody Allen	persona	attore	un attore
+45	Marylin Monroe	persona	attore	una attrice
+46	Quentin Tarantino	persona	attore	(anche) un attore
+47	Emma Stone	persona	attore	una attrice
+48	Will Smith	persona	attore	una attrice
+49	Kristen Stewart	persona	attore	una attrice
+50	Scarlett Johansson	persona	attore	una attrice
+51	Israele	luogo	stato	uno stato
+52	Giappone	luogo	stato	uno stato
+53	Svizzera	luogo	stato	uno stato
+54	Germania	luogo	stato	uno stato
+55	Canada	luogo	stato	uno stato
+56	Regno Unito	luogo	stato	uno stato
+57	Austria	luogo	stato	uno stato
+58	Sud Africa	luogo	stato	uno stato
+59	Spagna	luogo	stato	uno stato
+60	Sud Corea	luogo	stato	uno stato
+61	New York	luogo	città	una città
+62	Parigi	luogo	città	una città
+63	Mosca	luogo	città	una città
+64	Roma	luogo	città	una città
+65	Pechino	luogo	città	una città
+66	Rio De Janeiro	luogo	città	una città
+67	Amsterdam	luogo	città	una città
+68	Atene	luogo	città	una città
+69	Istanbul	luogo	città	una città
+70	Sydney	luogo	città	una città
+71	Maldive	luogo	area	un'area
+72	Grand Canyon	luogo	area	un'area
+73	Amazzonia	luogo	area	un'area
+74	Ayers Rock	luogo	area	un'area
+75	Sahara	luogo	area	un'area
+76	Galapagos	luogo	area	un'area
+77	Cervino	luogo	area	un'area
+78	Cascate del Niagara	luogo	area	un'area
+79	Monte Fuji	luogo	area	un'area
+80	Antartide	luogo	area	un'area
+81	Oceano Pacifico	luogo	corso d'acqua	un corso d'acqua
+82	Canale della Manica	luogo	corso d'acqua	un corso d'acqua
+83	Mar Mediterraneo	luogo	corso d'acqua	un corso d'acqua
+84	Mar dei Caraibi	luogo	corso d'acqua	un corso d'acqua
+85	Nilo	luogo	corso d'acqua	un corso d'acqua
+86	Mar Nero	luogo	corso d'acqua	un corso d'acqua
+87	Mare del Nord	luogo	corso d'acqua	un corso d'acqua
+88	Mare Rosso	luogo	corso d'acqua	un corso d'acqua
+89	Baia di Hudson	luogo	corso d'acqua	un corso d'acqua
+90	Oceano Atlantico	luogo	corso d'acqua	un corso d'acqua
+91	Monte Rushmore	luogo	monumento	un monumento
+92	Taj Mahal	luogo	monumento	un monumento
+93	Piramidi di Giza	luogo	monumento	un monumento
+94	Muraglia Cinese	luogo	monumento	un monumento
+95	Stonehenge	luogo	monumento	un monumento
+96	Macchu Picchu	luogo	monumento	un monumento
+97	Monte Saint-Michel	luogo	monumento	un monumento
+98	Torre di Pisa	luogo	monumento	un monumento
+99	Sagrada Familia	luogo	monumento	un monumento
+100	Santorini	luogo	monumento	un monumento
