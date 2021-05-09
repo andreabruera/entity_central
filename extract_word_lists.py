@@ -33,8 +33,17 @@ class Entities:
 
         if self.word_set == 'full_wiki' or self.word_set == 'wakeman_henson' or self.word_set == 'wikisrs':
             entities_list = {ent : 'ent' for ent in self.words.keys()}
+
+        elif self.word_set == 'eeg_one':
+            entities_list = {ent : 'ent' for ent in self.words.keys()}
+            cats = ['Musician', 'Actor', 'Politician', 'Writer', \
+                    'Body of water', 'City', 'Monument', 'Country']
+            for c in cats:
+                entities_list[c] = 'cat' 
+    
         else:
             entities_list = {ent : 'cat' for ent in self.words.keys() if re.sub('[0-9]', '', ent) != ''}
+
         fine_list = {cat[0] : 'cat' for ent, cat in self.words.items() if cat[0] != 'Unknown'}
         coarse_list = {cat[1] : 'cat' for ent, cat in self.words.items() if cat[0] != 'Unknown'}
 
@@ -83,14 +92,44 @@ class Entities:
     def eeg_one(self):
 
         with open('resources/exp_one_stimuli.txt') as ids_txt:
-            raw_lines = [l.strip().split('\t')[1:] for l in ids_txt.readlines()][1:]
+            lines = [l.strip().split('\t')[1:] for l in ids_txt.readlines()][1:]
         coarse_mapper = {'persona' : 'Person', 'luogo' : 'Place'}
        
         fine_mapper = {'musicista' : 'Musician', 'attore' : 'Actor', \
                        'politico' : 'Politician', 'scrittore' : 'Writer', \
                        'corso d\'acqua' : 'Body of water', 'città' : 'City', \
                        'monumento' : 'Monument', 'stato' : 'Country'}
-        words_and_cats = {l[0] : (fine_mapper[l[2]], coarse_mapper[l[1]]) for l in lines if l[2] in fine_mapper.keys()}
+
+        names_mapper = {'Papa Francesco' : 'Pope Francis', 'Gandhi' : 'Mahatma Gandhi', \
+                        'Martin Luther King' : 'Martin Luther King Jr.', \
+                        'J.K. Rowling' : 'J. K. Rowling', 'Lev Tolstoj' : 'Leo Tolstoy', \
+                        'Marylin Monroe' : 'Marilyn Monroe', \
+                        'Israele' : 'Israel', 'Giappone' : 'Japan', 'Svizzera' : 'Switzerland', \
+                        'Regno Unito' : 'United Kingdom', \
+                        'Sud Africa' : 'South Africa', 'Sud Corea' : 'South Korea', \
+                        'Pechino' : 'Beijing', 'Rio De Janeiro' : 'Rio de Janeiro', \
+                        'Atene' : 'Athens', 'Oceano Pacifico' : 'Pacific Ocean', \
+                        'Canale della Manica' : 'English Channel', \
+                        'Mar Mediterraneo' : 'Mediterranean Sea', 'Mar dei Caraibi' : 'Caribbean Sea', \
+                        'Mar Nero' : 'Black Sea', 'Nilo' : 'Nile', 'Parigi' : 'Paris',\
+                        'Mare del Nord' : 'North Sea', 'Baia di Hudson' : 'Hudson Bay', \
+                        'Oceano Atlantico' : 'Atlantic Ocean', 'Roma' : 'Rome',\
+                        'Monte Rushmore' : 'Mount Rushmore', 'Piramidi di Giza' : 'Giza pyramid complex', \
+                        'Muraglia Cinese' : 'Great Wall of China', 'Mosca' : 'Moscow',\
+                        'Macchu Picchu' : 'Machu Picchu', 'Monte Saint-Michel' : 'Mont-Saint-Michel', \
+                        'Torre di Pisa' : 'Leaning Tower of Pisa', 'Mare Rosso' : 'Red Sea',\
+                        'Sagrada Familia' : 'Sagrada_Família', 'New York' : 'New York City',\
+                        'Madonna' : 'Madonna (entertainer)'}
+
+        words_and_cats = dict()
+        for l in lines:
+            if l[2] in fine_mapper.keys():
+                
+                if l[0] in names_mapper.keys():
+                    name = names_mapper[l[0]]
+                else:
+                    name = l[0]
+                words_and_cats[name] = (fine_mapper[l[2]], coarse_mapper[l[1]])
 
         return words_and_cats
 

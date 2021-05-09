@@ -28,17 +28,16 @@ def get_logit_predictions(outputs, bert_tokenizer, relevant_indices, topn=40):
 
     return predictions
 
-def vector_to_txt(word, vector, output_file):
-    output_file.write('{}\t'.format(word))
-    for dimension_index, dimension_value in enumerate(vector):
-        if dimension_index != len(vector)-1:
+def vector_to_txt(word, vector_layers, output_file):
+    output_file.write('{}\n'.format(word))
+    for vector in vector_layers:
+        for dimension_value in vector:
             output_file.write('{}\t'.format(dimension_value))
-        else: 
-            output_file.write('{}\n'.format(dimension_value))
+        output_file.write('\n')
 
 # Create multiple vectors for Bert clustering analysis
 
-def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/word_vectors/bert'):
+def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/github/fame/word_vectors/bert'):
 
     bert_tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
     #bert_model = BertModel.from_pretrained('bert-base-cased')
@@ -46,8 +45,8 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
 
 
     ### Extracting the BERT vectors
-    for extraction_method in ['unmasked', 'full_sentence', 'facets', 'masked']:
-    #for extraction_method in ['facets']:
+    for extraction_method in ['unmasked', 'full_sentence', 'masked']:
+    #for extraction_method in ['full_sentence']:
 
         print('Now extracting the vectors in modality {}'.format(extraction_method))
         bert_vectors = collections.defaultdict(list)       
@@ -129,7 +128,7 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
                         word_layers = list()
 
                         ### Using the first 4 layers in BERT
-                        for layer in range(1, 5):
+                        for layer in range(1, 13):
                             layer_container = list()
                             for relevant_index_list in relevant_indices:
                                 for individual_index in relevant_index_list:
@@ -137,13 +136,14 @@ def bert(entities_and_sentences_dict, out_folder='/import/cogsci/andrea/dataset/
                             layer_container = numpy.average(layer_container, axis=0)
                             assert len(layer_container) == 768
                             word_layers.append(layer_container)
-                        sentence_vector = numpy.average(word_layers, axis=0)
-                        assert len(sentence_vector) == 768
-                        bert_vectors[entity].append((sentence, sentence_vector))
+                        #sentence_vector = numpy.average(word_layers, axis=0)
+                        #assert len(sentence_vector) == 768
+                        #bert_vectors[entity].append((sentence, sentence_vector))
+                        bert_vectors[entity].append((sentence, word_layers))
 
         print('Now writing vectors to file...')
         for entity, vector_tuples in tqdm(bert_vectors.items()):
 
             with open(os.path.join(extraction_method_folder, '{}.vec'.format(re.sub(' ', '_', entity))), 'w') as o:
-                for sentence, vector in vector_tuples:
-                    vector_to_txt(sentence, vector, o)
+                for sentence, vector_layers in vector_tuples:
+                    vector_to_txt(sentence, vector_layers, o)

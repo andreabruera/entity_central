@@ -19,6 +19,8 @@ def read_sentences(entities_dict):
     for current_word, word_type in tqdm(entities_dict.items()):
 
         file_current_word = re.sub(' ', '_', current_word)
+        
+        #print([current_word, file_current_word])
         txt_file = '{}.txt'.format(file_current_word)
 
         if word_type == 'ent':
@@ -61,6 +63,7 @@ def read_sentences(entities_dict):
 
         if current_cat == 'ent':
 
+            current_word = re.sub('_', ' ', current_word)
             current_mention = '[[{}|'.format(current_word)
 
         else:
@@ -72,7 +75,8 @@ def read_sentences(entities_dict):
                 current_mention = most_frequent
 
         selected_lines = [l.strip() for l in current_lines if current_mention in l]
-        
+        if len(selected_lines) == 0:
+            print('\tmissing sentences for {} - {}'.format(current_word, current_mention))
         ### Removing annotation for other entities than the current one, while surrounding the current one by two '[SEP]' tokens
         for l in selected_lines:
 
