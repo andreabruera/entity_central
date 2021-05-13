@@ -7,7 +7,7 @@ import tqdm
 
 from tqdm import tqdm
 
-def read_sentences(entities_dict):
+def read_sentences(entities_dict, args):
 
     spacy_model = spacy.load("en_core_web_sm")
 
@@ -30,7 +30,7 @@ def read_sentences(entities_dict):
             short_folder = current_word[:2]
             file_name = os.path.join('/import/cogsci/andrea/dataset/corpora/wikipedia_article_by_article', short_folder, txt_file)
 
-        if c<5: ### Just for debugging
+        if c<5: ### For debugging: uncomment next line
             #c+=1
             word_paths[current_word] = file_name
         else:

@@ -93,6 +93,8 @@ class Entities:
 
         with open('resources/exp_one_stimuli.txt') as ids_txt:
             lines = [l.strip().split('\t')[1:] for l in ids_txt.readlines()][1:]
+        with open('resources/final_words_exp_one.txt') as ids_txt:
+            actual_words = [l.strip() for l in ids_txt.readlines()]
         coarse_mapper = {'persona' : 'Person', 'luogo' : 'Place'}
        
         fine_mapper = {'musicista' : 'Musician', 'attore' : 'Actor', \
@@ -123,7 +125,7 @@ class Entities:
 
         words_and_cats = dict()
         for l in lines:
-            if l[2] in fine_mapper.keys():
+            if l[2] in fine_mapper.keys() and l[0] in actual_words:
                 
                 if l[0] in names_mapper.keys():
                     name = names_mapper[l[0]]
