@@ -105,9 +105,9 @@ class Entities:
         names_mapper = {'Papa Francesco' : 'Pope Francis', 'Gandhi' : 'Mahatma Gandhi', \
                         'Martin Luther King' : 'Martin Luther King Jr.', \
                         'J.K. Rowling' : 'J. K. Rowling', 'Lev Tolstoj' : 'Leo Tolstoy', \
-                        'Marylin Monroe' : 'Marilyn Monroe', \
+                        'Marylin Monroe' : 'Marilyn Monroe', 'Germania' : 'Germany',\
                         'Israele' : 'Israel', 'Giappone' : 'Japan', 'Svizzera' : 'Switzerland', \
-                        'Regno Unito' : 'United Kingdom', \
+                        'Regno Unito' : 'United Kingdom', 'Spagna' : 'Spain', \
                         'Sud Africa' : 'South Africa', 'Sud Corea' : 'South Korea', \
                         'Pechino' : 'Beijing', 'Rio De Janeiro' : 'Rio de Janeiro', \
                         'Atene' : 'Athens', 'Oceano Pacifico' : 'Pacific Ocean', \

@@ -43,26 +43,39 @@ def elmo(entities_and_sentences_dict, args):
             token_tensor = text_field.as_tensor(text_field.get_padding_lengths())
             tensor_dict = text_field.batch_tensors([token_tensor])
             embedded_tokens = embedder(tensor_dict)
+
             if args.extraction_mode == 'full_sentence':
+
                 elmo_representation = numpy.average(embedded_tokens[0, :, :].detach().numpy(), axis=0)
+                relevant_indices = ['', '']
+
             elif args.extraction_mode == 'masked':
+
                 ### Getting the important indices
-                relevant_indices = [i for i, input_token in enumerate(tokens) if str(input_token) == 'CHAR'] 
+                relevant_indices = [i for i, input_token in enumerate(tokens) if 'CHAR' in str(input_token)] 
+
                 mentions = list()
                 for i in relevant_indices:
                     mention_representation = embedded_tokens[0, i, :].detach().numpy()
                     mentions.append(mention_representation)
                 elmo_representation = numpy.average(mentions, axis=0)
+
             elif args.extraction_mode == 'unmasked':
+
                 ### Getting the important indices
-                name = entity.split()
+                name = entity.split() + entity.lower().split()
                 relevant_indices = [i for i, input_token in enumerate(tokens) if str(input_token) in name] 
-                assert len(relevant_indices) >= 1
+
                 mentions = list()
                 for i in relevant_indices:
                     mention_representation = embedded_tokens[0, i, :].detach().numpy()
                     mentions.append(mention_representation)
                 elmo_representation = numpy.average(mentions, axis=0)
-            elmo_vectors[entity].append((sentence, [elmo_representation]))
+            
+            if len(relevant_indices) >= 1 and elmo_representation.shape == (1024,):
+                elmo_vectors[entity].append((sentence, [elmo_representation]))
+            else:
+                print('sentence : {}'.format(sentence))
+                print('entity: {}'.format(entity))
 
     return elmo_vectors
