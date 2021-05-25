@@ -52,6 +52,8 @@ if args.word_selection == 'wikisrs':
     ent_dict = {k : 'ent' for k in w_list}
 
 if args.model != 'transe':
+    if args.model == 'bert':
+        ent_dict = {k : v for k, v in ent_dict.items() if k != 'Spain' and k != 'Germany'}
     ent_sentences = read_sentences(ent_dict, args)
 
     if args.model == 'elmo':

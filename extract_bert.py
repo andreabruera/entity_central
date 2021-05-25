@@ -58,7 +58,6 @@ def bert(entities_and_sentences_dict, args):
             elif args.extraction_mode == 'full_sentence':
                 sentence = re.sub('\[SEP\] ', '', sentence)
 
-
             input_ids = bert_tokenizer(sentence, return_tensors='pt')
             readable_input_ids = input_ids['input_ids'][0].tolist()
 
