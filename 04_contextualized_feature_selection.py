@@ -20,6 +20,7 @@ parser.add_argument(
                     '--brain_data_file',
                     required=True,
                     )
+parser.add_argument('--corpus', choices=['opensubtitles', 'wikipedia'], required=True)
 parser.add_argument('--experiment_id', choices=['one', 'two'], required=True)
 parser.add_argument('--model', choices=['ITBERT', 'MBERT', 'GILBERTO',
                                         'ITGPT2small', 'ITGPT2medium',
@@ -47,11 +48,11 @@ parser.add_argument('--layer', choices=[
 parser.add_argument('--debugging', action='store_true')
 args = parser.parse_args()
 
-model_name, computational_model = load_comp_model_name(args)
+model_name, computational_model, out_shape = load_comp_model_name(args)
 
 vecs_file, rankings_folder = load_vec_files(args, computational_model)
 
-entity_vectors, all_sentences = read_full_wiki_vectors(vecs_file)
+entity_vectors, all_sentences = read_full_wiki_vectors(vecs_file, out_shape)
 
 ### now ranking sentences for each subject!
 ### Loading brain data
@@ -85,10 +86,9 @@ for s, sub_data in tqdm(brain_data.items()):
         train_input = [d[0] for d in train_data]
         train_target = [d[1] for d in train_data]
         ### test
-        test_data = [(data_point, sub_data[k], all_sentences[k]) for k, v in current_entity_vectors.items() for data_point in v if k==left_out]
+        test_data = [(data_point, sub_data[k]) for k, v in current_entity_vectors.items() for data_point in v if k==left_out]
         test_input = [d[0] for d in test_data]
         test_target = [d[1] for d in test_data]
-        sentences = [d[2] for d in test_data]
         model = sklearn.linear_model.Ridge()
         model.fit(train_input, train_target)
         predictions = model.predict(test_input)

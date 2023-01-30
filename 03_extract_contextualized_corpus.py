@@ -16,22 +16,24 @@ from scipy import stats
 from sklearn.linear_model import Ridge, RidgeCV
 from tqdm import tqdm
 
-#from utils import levenshtein, load_subject_runs, read_events, read_vectors
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead
 
-#from utils import read_brain_mask, read_stimuli_and_cats, shorten_stimuli
+from utils import load_comp_model_name, load_vec_files, read_full_wiki_vectors, read_sentences_folder
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--experiment_id', choices=['one', 'two'], required=True)
 parser.add_argument(
-                    '--sentences_file',
-                    required=True,
+                    '--language', 
+                    choices=['it', 'en'], 
+                    required=True
                     )
 parser.add_argument(
-                    '--output_identifier',
-                    required=True,
-                    help='how to name the resulting frequencies file'
+                    '--corpus_portion',
+                    choices=['entity_articles', 'full_corpus'],
+                    required=True
                     )
+parser.add_argument('--corpus', choices=['opensubtitles', 'wikipedia'], required=True)
 parser.add_argument('--layer', choices=[
                                         'low_four',
                                         'mid_four', 
@@ -50,105 +52,27 @@ parser.add_argument('--layer', choices=[
                                         'jat_mitchell',
                                         ],
                     required=True, help='Which layer?')
-parser.add_argument('--model', choices=['ITBERT', 'MBERT', 'GILBERTO',
-                                        'ITGPT2small', 'ITGPT2medium',
-                                        'geppetto', 'xlm-roberta-large',
+parser.add_argument('--model', choices=[
+                                        'MBERT', 
+                                        'ITGPT2medium',
+                                        'xlm-roberta-large',
                                         ],
                     required=True, help='Which model?')
 parser.add_argument('--cuda', choices=['0', '1', '2',
                                        ],
                     required=True, help='Which cuda device?')
-''' 
-parser.add_argument('--spatial_analysis', 
-                    choices=[ 
-                            'vmpfc',
-                            'whole_brain', 
-                            'fedorenko_language', 
-                            'control_semantics', 
-                            'general_semantics',
-                            'bilateral_atls',
-                            'left_atl',
-                            'right_atl',
-                            'pSTS',
-                            'IFG',
-                            ], 
-                    required=True, 
-                    help = 'Specifies how features are to be selected')
-parser.add_argument('--contextualized_selection_method', 
-                    choices=[
-                             'brain', 
-                             'concreteness',
-                             ], 
-                    required=True, 
-                    help = 'Specifies how features are to be selected')
-parser.add_argument('--analysis', required=True, \
-                    choices=[
-                             'whole_trial', 
-                             'glm', 
-                             'whole_trial_flattened'
-                             ] + [
-                             'time_resolved_{}'.format(t) for t in range(-2, 16)
-                             ],
-                    help='Average time points, or run classification'
-                    )
-parser.add_argument('--beg', 
-                    choices=[
-                             'all',
-                             '2', 
-                             '3',
-                             '4'
-                             ],
-                    required=True,
-                    help = 'When to start extracting the img')
-parser.add_argument('--end', 
-                    choices=[
-                             'all',
-                             '8', 
-                             '9',
-                             '10',
-                             '11',
-                             '12'
-                             ],
-                    required=True,
-                    help = 'When to end extracting the img'
-                         'time point by time point?')
-''' 
 parser.add_argument('--debugging', action='store_true')
 args = parser.parse_args()
 
-if args.model == 'ITBERT':
-    model_name = 'dbmdz/bert-base-italian-xxl-cased'
-if args.model == 'GILBERTO':
-    model_name = 'idb-ita/gilberto-uncased-from-camembert'
-if args.model == 'ITGPT2small':
-    model_name = 'GroNLP/gpt2-small-italian'
-if args.model == 'ITGPT2medium':
-    model_name = 'GroNLP/gpt2-medium-italian-embeddings'
-    computational_model = 'gpt2'
-if args.model == 'geppetto':
-    model_name = 'LorenzoDeMattei/GePpeTto'
-if args.model == 'MBERT':
-    model_name = 'bert-base-multilingual-cased'
-if args.model == 'xlm-roberta-large':
-    model_name = 'xlm-roberta-large'
-    computational_model = 'xlm-roberta-large'
+model_name, computational_model, out_shape = load_comp_model_name(args)
 
-vecs_folder = os.path.join(
-                          'contextualized_vector_selection', 
-                          args.output_identifier,
-                          computational_model,
-                          'phrase_vectors',
-                          args.layer,
-                          )
+vecs_file, rankings_folder = load_vec_files(args, computational_model)
 
-os.makedirs(vecs_folder, exist_ok=True)
-vecs_file= os.path.join(
-                        vecs_folder, 
-                        'all_{}_entity_vectors.vector'.format(computational_model)
-                        )
 ### extracting them if not available
 all_sentences = dict()
-with open(args.sentences_file) as i:
+sent_folder = read_sentences_folder(args)
+sent_file = os.path.join(sent_folder,'{}.sentences'.format(args.corpus_portion)) 
+with open(sent_file) as i:
     with tqdm() as counter:
         for l in i:
             name_and_sent = l.strip().split('\t')
@@ -158,7 +82,11 @@ with open(args.sentences_file) as i:
             except KeyError:
                 all_sentences[name_and_sent[0]] = [name_and_sent[1]]
 
-all_sentences = {k : random.sample(v, k=min(1000, len(v))) for k, v in all_sentences.items()}
+if args.debugging:
+    max_n = 500
+else:
+    max_n = 1000
+all_sentences = {k : random.sample(v, k=min(max_n, len(v))) for k, v in all_sentences.items()}
 
 cuda_device = 'cuda:{}'.format(args.cuda)
 
@@ -191,9 +119,6 @@ with tqdm() as pbar:
         entity_vectors[stimulus] = list()
         assert len(stim_sentences) >= 1
         for l_i, l in enumerate(stim_sentences):
-            if args.debugging:
-                if l_i >= 100:
-                    continue
             inputs = tokenizer(l, return_tensors="pt")
 
             spans = [i_i for i_i, i in enumerate(inputs['input_ids'].numpy().reshape(-1)) if 
@@ -205,8 +130,7 @@ with tqdm() as pbar:
                 try:
                     assert len(spans) % 2 == 0
                 except AssertionError:
-                    #print(l)
-                    entity_vectors[stimulus].append((numpy.zeros(shape=(1024,)), old_l))
+                    entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), old_l))
                     continue
                 l = re.sub(r'\[SEP\]', '', l)
                 ### Correcting spans
@@ -221,14 +145,14 @@ with tqdm() as pbar:
                     split_spans.append(current_span)
 
                 if len(tokenizer.tokenize(l)) > max_len:
-                    entity_vectors[stimulus].append((numpy.zeros(shape=(1024,)), old_l))
+                    entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), old_l))
                     continue
                 try:
                     inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
                 except RuntimeError:
                     print('input error')
                     print(l)
-                    entity_vectors[stimulus].append((numpy.zeros(shape=(1024,)), old_l))
+                    entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), old_l))
                     continue
                 try:
                     outputs = model(**inputs, output_attentions=False, \
@@ -236,7 +160,7 @@ with tqdm() as pbar:
                 except RuntimeError:
                     print('output error')
                     print(l)
-                    entity_vectors[stimulus].append((numpy.zeros(shape=(1024,)), old_l))
+                    entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), old_l))
                     continue
 
                 hidden_states = numpy.array([s[0].cpu().detach().numpy() for s in outputs['hidden_states']])
@@ -245,12 +169,13 @@ with tqdm() as pbar:
                     split_spans = [split_spans[-1]]
                 for beg, end in split_spans:
                     if len(tokenizer.tokenize(l)[beg:end]) == 0:
-                        entity_vectors[stimulus].append((numpy.zeros(shape=(1024,)), old_l))
+                        entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), old_l))
                         continue
                     print(tokenizer.tokenize(l)[beg:end])
                     ### If there are less than two tokens that must be a mistake
-                    if len(tokenizer.tokenize(l)[beg:end]) < 2:
-                        entity_vectors[stimulus].append((numpy.zeros(shape=(1024,)), old_l))
+                    if len(tokenizer.tokenize(l)[beg:end]) < 1:
+                        entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), old_l))
+                        print('\nERROR {}\n'.format(l))
                         continue
                     mention = hidden_states[:, beg:end, :]
                     mention = numpy.average(mention, axis=1)
@@ -317,7 +242,10 @@ with tqdm() as pbar:
 with open(vecs_file, 'w') as o:
     for stim, vecz in entity_vectors.items():
         for vec, line in vecz:
-            assert vec.shape == (1024, )
+            try:
+                assert vec.shape == out_shape
+            except AssertionError:
+                print([stim, line])
             line = line.replace('\t', ' ')
             o.write('{}\t{}\t'.format(stim, line))
             for dim in vec:
