@@ -40,9 +40,9 @@ with tqdm() as counter:
                 txt = re.sub('<doc.+?title="(.+?)">', '', doc).strip()
                 txt = re.sub(r'\n+', r'\n', txt)
                 if len(txt.split('\n')) > 1:
-                    wiki_file = return_entity_filename(entity) 
+                    wiki_file = return_entity_file(entity) 
                     wiki_file = os.path.join(
-                                             output_folder,
+                                             args.output_folder,
                                              wiki_file
                                              )
                     with open(wiki_file, 'w') as o:

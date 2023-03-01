@@ -1,35 +1,16 @@
 import argparse
 import multiprocessing
 import os
+import random
 import re
 #import spacy
 
 from qwikidata.linked_data_interface import get_entity_dict_from_api
 from tqdm import tqdm
 
-from utils import read_sentences_folder, return_entity_file
+from utils import read_args, read_sentences_folder, return_entity_file
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-                    '--entity_list_file',
-                    required=True,
-                    )
-parser.add_argument('--corpus', choices=['opensubtitles', 'wikipedia'], required=True)
-parser.add_argument(
-                    '--language', 
-                    choices=['it', 'en'], 
-                    required=True
-                    )
-parser.add_argument(
-                    '--corpus_portion',
-                    choices=['entity_articles', 'full_corpus'],
-                    required=True
-                    )
-parser.add_argument(
-                    '--debugging',
-                    action='store_true'
-                    )
-args = parser.parse_args()
+args = read_args()
 
 def sensible_finder(all_args):
 
@@ -68,11 +49,13 @@ def sensible_finder(all_args):
     return ent_sentences
 
 ### reading entity list
-assert os.path.exists(args.entity_list_file)
-with open(args.entity_list_file) as i:
+entity_list_file = os.path.join('brain_data', args.experiment_id, 'wikidata_ids_{}.txt'.format(args.experiment_id))
+assert os.path.exists(entity_list_file)
+with open(entity_list_file) as i:
     ent_lines = [l.strip().split('\t') for l in i.readlines()]
 for l_i, l in enumerate(ent_lines):
     if l_i == 0:
+        print(l)
         assert l[0] == 'entity'
         assert l[1] == 'wikidata_id'
     assert len(l) == 2
@@ -84,14 +67,14 @@ files = dict()
 
 out_folder = read_sentences_folder(args)
 
-all_sentences = {k : list() for k in aliases.keys()}
-
 if args.corpus == 'wikipedia':
     corpus_folder = os.path.join('/', 'import', 'cogsci',
                                  'andrea', 'dataset', 
-                                 'corpora', 'wikipedia_italian',
-                                 'it_wiki_article_by_article'
-                                 )
+                                 'corpora', 
+                                 'wikipedia_{}'.format(args.language),
+                                 '{}_wiki_article_by_article'.format(args.language)
+                                 #'wexea_annotated_wiki', 'clean_articles'
+                             )
 if args.corpus == 'opensubtitles':
     corpus_folder = os.path.join('/', 'import', 'cogsci',
                                  'andrea', 'dataset', 
@@ -99,10 +82,10 @@ if args.corpus == 'opensubtitles':
                                  #'opensubs_it_ready'
                                  'OpenSubtitles', 'opensubtitles-parser', 'first_pass'
                                  )
+assert os.path.exists(corpus_folder)
 
 ### checking wiki files
 marker = False
-assert os.path.exists(corpus_folder)
 for k, wikidata_id in tqdm(entities.items()):
     ent_dict = get_entity_dict_from_api(wikidata_id)
     main_alias = ent_dict['labels'][args.language]['value']
@@ -111,6 +94,7 @@ for k, wikidata_id in tqdm(entities.items()):
     if args.corpus_portion == 'entity_articles':
         file_path = os.path.join(corpus_folder, file_k)
         try:
+            print(file_path)
             assert os.path.exists(file_path)
             with open(file_path) as i:
                 lines = [l.strip() for l in i.readlines()]
@@ -124,13 +108,14 @@ for k, wikidata_id in tqdm(entities.items()):
         for al in ent_dict['aliases'][args.language]:
             aliases[k].append(al['value'])
 
+all_sentences = {k : list() for k in aliases.keys()}
+
 if args.corpus_portion == 'entity_articles':
     if marker:
         raise RuntimeError('Some names are not correctly written!')
 
-
     for key in tqdm(aliases.keys()):
-        ent_sentences = sensible_finder([files[key], aliases])
+        ent_sentences = sensible_finder([files[key], aliases, args])
         for k, v in ent_sentences.items():
             all_sentences[k].extend(v)
 
@@ -164,6 +149,7 @@ elif args.corpus_portion == 'full_corpus':
 
 ### Trying to avoid repetitions
 final_sents = {k : list(set(v)) for k, v in all_sentences.items()}
+final_sents = {k : random.sample(v, k=len(v)) for k, v in all_sentences.items()}
 
 ### Writing to file
 with open(os.path.join(out_folder, '{}.sentences'.format(args.corpus_portion)), 'w') as o:

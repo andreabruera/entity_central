@@ -19,50 +19,9 @@ from tqdm import tqdm
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead
 
-from utils import load_comp_model_name, load_vec_files, read_full_wiki_vectors, read_sentences_folder
+from utils import load_comp_model_name, load_vec_files, read_args, read_full_wiki_vectors, read_sentences_folder
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--experiment_id', choices=['one', 'two'], required=True)
-parser.add_argument(
-                    '--language', 
-                    choices=['it', 'en'], 
-                    required=True
-                    )
-parser.add_argument(
-                    '--corpus_portion',
-                    choices=['entity_articles', 'full_corpus'],
-                    required=True
-                    )
-parser.add_argument('--corpus', choices=['opensubtitles', 'wikipedia'], required=True)
-parser.add_argument('--layer', choices=[
-                                        'low_four',
-                                        'mid_four', 
-                                        'top_four',
-                                        'low_six',
-                                        'mid_six', 
-                                        'top_six',
-                                        'low_twelve',
-                                        'mid_twelve',
-                                        'top_twelve', 
-                                        'upper_four',
-                                        'upper_six',
-                                        'cotoletta_four',
-                                        'cotoletta_six',
-                                        'cotoletta_eight',
-                                        'jat_mitchell',
-                                        ],
-                    required=True, help='Which layer?')
-parser.add_argument('--model', choices=[
-                                        'MBERT', 
-                                        'ITGPT2medium',
-                                        'xlm-roberta-large',
-                                        ],
-                    required=True, help='Which model?')
-parser.add_argument('--cuda', choices=['0', '1', '2',
-                                       ],
-                    required=True, help='Which cuda device?')
-parser.add_argument('--debugging', action='store_true')
-args = parser.parse_args()
+args = read_args()
 
 model_name, computational_model, out_shape = load_comp_model_name(args)
 
@@ -70,22 +29,41 @@ vecs_file, rankings_folder = load_vec_files(args, computational_model)
 
 ### extracting them if not available
 all_sentences = dict()
-sent_folder = read_sentences_folder(args)
-sent_file = os.path.join(sent_folder,'{}.sentences'.format(args.corpus_portion)) 
-with open(sent_file) as i:
-    with tqdm() as counter:
-        for l in i:
-            name_and_sent = l.strip().split('\t')
-            try:
-                all_sentences[name_and_sent[0]].append(name_and_sent[1])
-                counter.update(1)
-            except KeyError:
-                all_sentences[name_and_sent[0]] = [name_and_sent[1]]
-
-if args.debugging:
-    max_n = 500
+if args.corpus == 'joint':
+    for corpus in ['wikipedia', 'opensubtitles']:
+        sent_folder = read_sentences_folder(args).replace(args.corpus, corpus)
+        sent_file = os.path.join(sent_folder,'{}.sentences'.format(args.corpus_portion)) 
+        with open(sent_file) as i:
+            with tqdm() as counter:
+                for l in i:
+                    name_and_sent = l.strip().split('\t')
+                    try:
+                        all_sentences[name_and_sent[0]].append(name_and_sent[1])
+                        counter.update(1)
+                    except KeyError:
+                        all_sentences[name_and_sent[0]] = [name_and_sent[1]]
+    if args.debugging:
+        max_n = 5000
+    else:
+        max_n = 10000
 else:
-    max_n = 1000
+    sent_folder = read_sentences_folder(args)
+    sent_file = os.path.join(sent_folder,'{}.sentences'.format(args.corpus_portion)) 
+    with open(sent_file) as i:
+        with tqdm() as counter:
+            for l in i:
+                name_and_sent = l.strip().split('\t')
+                try:
+                    all_sentences[name_and_sent[0]].append(name_and_sent[1])
+                    counter.update(1)
+                except KeyError:
+                    all_sentences[name_and_sent[0]] = [name_and_sent[1]]
+
+    if args.debugging:
+        max_n = 500
+    else:
+        max_n = 1000
+
 all_sentences = {k : random.sample(v, k=min(max_n, len(v))) for k, v in all_sentences.items()}
 
 cuda_device = 'cuda:{}'.format(args.cuda)
@@ -99,6 +77,7 @@ if 'GeP' in model_name:
 elif 'gpt' in model_name or 'GPT' in model_name:
     model = AutoModel.from_pretrained(model_name).to(cuda_device)
     required_shape = model.embed_dim
+    print(required_shape)
     max_len = model.config.n_positions
     n_layers = model.config.n_layer
 else:
@@ -138,7 +117,7 @@ with tqdm() as pbar:
                 spans = [max(0, s-c) for s,c in zip(spans, correction)]
                 split_spans = list()
                 for i in list(range(len(spans)))[::2]:
-                    if len(l.split()) > 5 and 'GPT' in args.model:
+                    if len(l.split()) > 5 and 'GPT' in args.model.lower():
                         current_span = (spans[i]+1, spans[i+1])
                     else:
                         current_span = (spans[i], spans[i+1])
@@ -223,13 +202,21 @@ with tqdm() as pbar:
                         layer_start = -6
                         ### outputs has at dimension 0 the final output
                         layer_end = n_layers+1
+                    if args.layer == 'top_two':
+                        layer_start = -2
+                        ### outputs has at dimension 0 the final output
+                        layer_end = n_layers+1
+                    if args.layer == 'top_one':
+                        layer_start = -1
+                        ### outputs has at dimension 0 the final output
+                        layer_end = n_layers+1
                     if args.layer == 'top_twelve':
                         layer_start = -12
                         ### outputs has at dimension 0 the final output
                         layer_end = n_layers+1
-                    if args.layer == 'jat_mitchell':
-                        layer_start = 10
-                        layer_end = 22
+                    if args.layer == 'top_eight':
+                        layer_start = -8
+                        layer_end = n_layers+1
                     mention = mention[layer_start:layer_end, :]
 
                     mention = numpy.average(mention, axis=0)

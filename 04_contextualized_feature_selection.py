@@ -13,40 +13,9 @@ from scipy import stats
 from sklearn.linear_model import Ridge, RidgeCV
 from tqdm import tqdm
 
-from utils import load_comp_model_name, load_vec_files, read_full_wiki_vectors
+from utils import load_comp_model_name, load_vec_files, read_args, read_full_wiki_vectors
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-                    '--brain_data_file',
-                    required=True,
-                    )
-parser.add_argument('--corpus', choices=['opensubtitles', 'wikipedia'], required=True)
-parser.add_argument('--experiment_id', choices=['one', 'two'], required=True)
-parser.add_argument('--model', choices=['ITBERT', 'MBERT', 'GILBERTO',
-                                        'ITGPT2small', 'ITGPT2medium',
-                                        'geppetto', 'xlm-roberta-large',
-                                        ],
-                    required=True, help='Which model?')
-parser.add_argument('--layer', choices=[
-                                        'low_four',
-                                        'mid_four', 
-                                        'top_four',
-                                        'low_six',
-                                        'mid_six', 
-                                        'top_six',
-                                        'low_twelve',
-                                        'mid_twelve',
-                                        'top_twelve', 
-                                        'upper_four',
-                                        'upper_six',
-                                        'cotoletta_four',
-                                        'cotoletta_six',
-                                        'cotoletta_eight',
-                                        'jat_mitchell',
-                                        ],
-                    required=True, help='Which layer?')
-parser.add_argument('--debugging', action='store_true')
-args = parser.parse_args()
+args = read_args()
 
 model_name, computational_model, out_shape = load_comp_model_name(args)
 
@@ -56,7 +25,9 @@ entity_vectors, all_sentences = read_full_wiki_vectors(vecs_file, out_shape)
 
 ### now ranking sentences for each subject!
 ### Loading brain data
-with open(args.brain_data_file) as i:
+brain_data_file = os.path.join('brain_data', args.experiment_id, 'rough_and_ready_brain_data_exp_{}.eeg'.format(args.experiment_id))
+assert os.path.exists(brain_data_file)
+with open(brain_data_file) as i:
     lines = [l.strip().split('\t') for l in i.readlines()][1:]
 subjects = set([int(l[0]) for l in lines])
 brain_data = {sub : {l[1] : numpy.array(l[2:], dtype=numpy.float64) for l in lines if int(l[0])==sub} for sub in subjects}

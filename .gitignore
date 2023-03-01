@@ -1,3 +1,6 @@
 __pycache__*
 contextualized_vector_selection/
 sentences/
+vectors/
+static_vectors/
+brain_data/
