@@ -10,7 +10,7 @@ parser.add_argument('--corpus', choices=['joint', 'opensubtitles', 'wikipedia'],
 parser.add_argument('--model', choices=['ITBERT', 'MBERT', 'GILBERTO',
                                         'ITGPT2small', 'ITGPT2medium',
                                         'geppetto', 'xlm-roberta-large',
-                                        'gpt2-xl', 'BERT_large',
+                                        'gpt2-large', 'BERT_large',
                                         ],
                     required=True, help='Which model?')
 parser.add_argument('--layer', choices=[
@@ -52,62 +52,43 @@ vecs_file, rankings_folder = load_vec_files(args, computational_model)
 
 entity_vectors, all_sentences = read_full_wiki_vectors(vecs_file, out_shape)
 
-collector = dict()
+collector = {k : {s : list() for s in range(1, 34)} for k in entity_vectors.keys()}
 
 for s in range(1, 34):
     rankings = os.path.join(rankings_folder, 'sub-{:02}.ranking'.format(s))
+    assert os.path.exists(rankings)
     with open(rankings) as i:
         lines = [l.strip().split('\t') for l in i.readlines()]
     rankings = {l[0] : [int(d) for d in l[1:]] for l in lines}
     for stim, ordered_idxs in rankings.items():
-        #vec = [all_vecs[ranking_stim][n] for n in rankings[ranking_stim][:10]]
-        #vec = numpy.average(vec, axis=0)
-        #assert vec.shape == (1024, )
-        #o.write('{}\t'.format(ranking_stim.replace('_', ' ')))
-        #for dim in vec:
-        #    o.write('{}\t'.format(dim))
-        #o.write('\n')
-        one_tenth = int(len(ordered_idxs)/10)
-        #one_fifth = int(len(ordered_idxs)/20)
-        #print(ordered_idxs[one_tenth-1])
-        try:
-            #collector[stim].extend(ordered_idxs[:1])
-            collector[stim].extend(ordered_idxs[:one_tenth])
-        except KeyError:
-            #collector[stim] = ordered_idxs[:3]
-            collector[stim] = ordered_idxs[:one_tenth]
-
-new_collector = dict()
-for k, v in collector.items():
-    counter = {k : 0 for k in set(v)}
-    for idx in v:
-        counter[idx] += 1
-    new_v = [k[0] for k in sorted(counter.items(), key=lambda item : item[1], reverse=True)]
-    print([k[1] for k in sorted(counter.items(), key=lambda item : item[1], reverse=True)][9])
-    new_collector[k] = new_v[:10]
-
+        collector[stim][s].extend(ordered_idxs[:10])
 
 random.seed(11)
-max_n = 100
+#max_n = 100
 #max_n = 24
 out_folder = os.path.join('vectors', args.corpus, args.language, args.corpus_portion, args.layer)
 os.makedirs(out_folder, exist_ok=True)
 #collector = {k : random.sample(set(v), k=min(len(set(v)), max_n)) for k, v in collector.items()}
-#with open(os.path.join(out_folder, 'exp_{}_{}_{}_replication_indices.tsv'.format(args.experiment_id, computational_model, args.language)), 'w') as o:
-#    o.write('entity\t{}_replication_indices\n'.format(computational_model))
-#    for k, v in new_collector.items():
-#        o.write('{}\t'.format(k))
-#        for idx in v:
-#            o.write('{}\t'.format(idx))
-#        o.write('\n')
-with open(os.path.join(out_folder, 'exp_{}_{}_{}_vectors.tsv'.format(args.experiment_id, computational_model, args.language)), 'w') as o:
-    o.write('entity\t{}_entity_vector\n'.format(computational_model))
-    for k, v in new_collector.items():
-        #vec = [entity_vectors[k][n] for n in v]
-        vec = [vec[1] for n in v for vec in entity_vectors[k] if vec[0]==n]
-        vec = numpy.average(vec, axis=0)
-        assert vec.shape == out_shape
-        o.write('{}\t'.format(k))
-        for dim in vec:
-            o.write('{}\t'.format(dim))
-        o.write('\n')
+#with open(os.path.join(out_folder, 'exp_{}_{}_dirty_{}_replication_indices.tsv'.format(args.experiment_id, computational_model, args.language)), 'w') as o:
+#    o.write('subject\tentity\t{}_replication_indices\n'.format(computational_model))
+#    for k, v in collector.items():
+#        for i in range(33):
+#            sub = i+1
+#            o.write('{}\t{}\t'.format(sub, k))
+#            for idx in v[i]:
+#                o.write('{}\t'.format(idx))
+#            o.write('\n')
+with open(os.path.join(out_folder, 'exp_{}_{}_dirty_{}_vectors.tsv'.format(args.experiment_id, computational_model, args.language)), 'w') as o:
+    o.write('subject\tentity\t{}_entity_vector\n'.format(computational_model))
+    for k, v in collector.items():
+        for sub, data in v.items():
+            vec = [entity_vectors[k][n] for n in data]
+            vec = numpy.average(vec, axis=0)
+            try:
+                assert vec.shape == out_shape
+            except AssertionError:
+                continue
+            o.write('{}\t{}\t'.format(sub, k))
+            for dim in vec:
+                o.write('{}\t'.format(dim))
+            o.write('\n')

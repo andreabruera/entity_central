@@ -21,7 +21,7 @@ from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoMod
 
 from utils import load_comp_model_name, load_vec_files, read_args, read_full_wiki_vectors, read_sentences_folder
 
-args = read_args()
+args = read_args(vector_extraction=True, contextualized_selection=True)
 
 model_name, computational_model, out_shape = load_comp_model_name(args)
 

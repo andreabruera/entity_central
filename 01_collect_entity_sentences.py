@@ -1,4 +1,5 @@
 import argparse
+import shutil
 import multiprocessing
 import os
 import random
@@ -17,6 +18,7 @@ def sensible_finder(all_args):
     lines = all_args[0]
     stimuli = all_args[1]
     args = all_args[2]
+    current_stimulus = all_args[3]
 
     if args.corpus == 'opensubtitles':
 
@@ -37,6 +39,9 @@ def sensible_finder(all_args):
     with tqdm() as counter:
         for l in lines:
             for stimulus, aliases in stimuli.items():
+                if args.corpus_portion == 'entity_articles':
+                    if stimulus != current_stimulus:
+                        continue
                 formula = '(?<!\w){}(?!\w)'.format(stimulus)
                 for alias in aliases:
                     formula = '{}|(?<!\w){}(?!\w)'.format(formula, alias)
@@ -83,6 +88,13 @@ if args.corpus == 'opensubtitles':
                                  'OpenSubtitles', 'opensubtitles-parser', 'first_pass'
                                  )
 assert os.path.exists(corpus_folder)
+articles_path = os.path.join(
+                             'articles',
+                             args.corpus,
+                             args.corpus_portion,
+                             args.language,
+                             )
+os.makedirs(articles_path, exist_ok=True)
 
 ### checking wiki files
 marker = False
@@ -96,6 +108,7 @@ for k, wikidata_id in tqdm(entities.items()):
         try:
             print(file_path)
             assert os.path.exists(file_path)
+            shutil.copy(file_path, articles_path)
             with open(file_path) as i:
                 lines = [l.strip() for l in i.readlines()]
             assert len(lines) > 0
@@ -104,9 +117,13 @@ for k, wikidata_id in tqdm(entities.items()):
             print([k, file_k])
             marker = True
     aliases[k] = [main_alias]
+    if len(k.split()) > 1:
+        aliases[k].append(k.split()[-1])
     if args.language in ent_dict['aliases'].keys():
         for al in ent_dict['aliases'][args.language]:
             aliases[k].append(al['value'])
+
+aliases = {k : sorted(v, key=lambda item : len(item), reverse=True) for k, v in aliases.items()}
 
 all_sentences = {k : list() for k in aliases.keys()}
 
@@ -115,7 +132,7 @@ if args.corpus_portion == 'entity_articles':
         raise RuntimeError('Some names are not correctly written!')
 
     for key in tqdm(aliases.keys()):
-        ent_sentences = sensible_finder([files[key], aliases, args])
+        ent_sentences = sensible_finder([files[key], aliases, args, key])
         for k, v in ent_sentences.items():
             all_sentences[k].extend(v)
 
@@ -137,7 +154,7 @@ elif args.corpus_portion == 'full_corpus':
     print('now running the actual sentence selection')
     ### Running
     with multiprocessing.Pool(processes=24) as pool:
-       results = pool.map(sensible_finder, [[corpus, aliases, args] for corpus in corpora])
+       results = pool.map(sensible_finder, [[corpus, aliases, args, ''] for corpus in corpora])
        pool.terminate()
        pool.join()
 
