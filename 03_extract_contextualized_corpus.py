@@ -19,7 +19,7 @@ from tqdm import tqdm
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead
 
-from utils import load_comp_model_name, load_vec_files, read_args, read_full_wiki_vectors, read_sentences_folder
+from utils import load_comp_model_name, load_vec_files, read_args, read_entity_sentences, read_full_wiki_vectors, read_sentences_folder
 
 args = read_args(vector_extraction=True, contextualized_selection=True)
 
@@ -27,6 +27,30 @@ model_name, computational_model, out_shape = load_comp_model_name(args)
 
 vecs_file, rankings_folder = load_vec_files(args, computational_model)
 
+if args.experiment_id == 'two' and args.corpus_portion != 'entity_sentences':
+    raise(RuntimeError)
+
+sent_len_threshold = 30
+
+original_sentences = read_entity_sentences(args)
+all_sentences = {k : list() for k in original_sentences.keys()}
+all_lengths = dict()
+for k, sents in original_sentences.items():
+    clean_sents = list()
+    current_sent = ''
+    for line in sents:
+        if len(line.split()) > sent_len_threshold:
+            clean_sents.append(line)
+        else:
+            current_sent = '{}, {}'.format(current_sent, line)
+            if len(current_sent.split()) > sent_len_threshold:
+                clean_sents.append(current_sent)
+                current_sent = ''
+    if current_sent != '':
+        clean_sents.append(current_sent)
+    all_sentences[k] = clean_sents
+
+'''
 ### extracting them if not available
 all_sentences = dict()
 if args.corpus == 'joint':
@@ -65,6 +89,7 @@ else:
         max_n = 1000
 
 all_sentences = {k : random.sample(v, k=min(max_n, len(v))) for k, v in all_sentences.items()}
+'''
 
 cuda_device = 'cuda:{}'.format(args.cuda)
 

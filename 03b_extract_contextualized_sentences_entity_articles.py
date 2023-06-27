@@ -21,7 +21,8 @@ from tqdm import tqdm
 
 from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead
 
-from utils import load_comp_model_name, load_vec_files, read_args, read_full_wiki_vectors, read_sentences_folder, return_entity_file, read_entity_sentences
+#from utils import load_comp_model_name, load_vec_files, read_args, read_full_wiki_vectors, read_sentences_folder, return_entity_file, read_entity_sentences
+from utils import load_comp_model_name, load_vec_files, read_args, read_entity_sentences, read_full_wiki_vectors, read_sentences_folder
 from exp_two_utils import read_personally_familiar_sentences
 
 def sensible_finder(all_args):
@@ -47,8 +48,7 @@ if args.experiment_id == 'two' and args.corpus_portion != 'entity_sentences':
 model_name, computational_model, out_shape = load_comp_model_name(args)
 
 vecs_file, rankings_folder = load_vec_files(args, computational_model)
-sent_len_threshold = 40
-
+sent_len_threshold = 20 
 
 original_sentences = read_entity_sentences(args)
 all_sentences = {k : list() for k in original_sentences.keys()}

@@ -1,6 +1,7 @@
 import argparse
 import numpy
 import os
+import random
 import re
 
 from qwikidata.linked_data_interface import get_entity_dict_from_api
@@ -267,83 +268,98 @@ def read_entity_sentences(args):
     files = dict()
     ### creating output folder
 
-    out_folder = read_sentences_folder(args)
 
-    if args.language == 'it':
-        corpus_folder = '/import/cogsci/andrea/dataset/corpora/wexea_it/articles_2/'
-    elif args.language == 'en':
-        corpus_folder = '/import/cogsci/andrea/dataset/corpora/wexea_annotated_wiki/ready_corpus/original_articles/'
-
-    ### checking wiki files
-    marker = False
-    for k, wikidata_id in tqdm(entities.items()):
-        ent_dict = get_entity_dict_from_api(wikidata_id)
-        main_alias = ent_dict['labels'][args.language]['value']
-        #print(main_alias)
-        file_k = return_entity_file(main_alias)
-        if main_alias == 'J. K. Rowling':
-            file_k = 'J._K._Rowling.txt'
-            main_alias = 'J.K. Rowling'
-        if main_alias == 'Sagrada Família':
-            file_k = 'Sagrada_Família.txt'
-            main_alias = 'Sagrada Familia'
-        sub_folder = re.sub("[^A-Za-z0-9]", '_', main_alias).lower()
+    if args.corpus_portion == 'entity_sentences':
         if args.language == 'it':
-            if main_alias == 'città':
-                file_k = 'Città.txt'
-                #main_alias = 'Città'
-            if main_alias == "massa d'acqua":
-                file_k = "Massa_d'acqua.txt"
-                #main_alias = 'Sagrada Familia'
-            if main_alias == "Madonna":
-                file_k = "Madonna_(cantante).txt"
+            corpus_folder = '/import/cogsci/andrea/dataset/corpora/wexea_it/articles_2/'
+        elif args.language == 'en':
+            corpus_folder = '/import/cogsci/andrea/dataset/corpora/wexea_annotated_wiki/ready_corpus/original_articles/'
+        ### checking wiki files
+        marker = False
+        for k, wikidata_id in tqdm(entities.items()):
+            ent_dict = get_entity_dict_from_api(wikidata_id)
+            main_alias = ent_dict['labels'][args.language]['value']
+            #print(main_alias)
+            file_k = return_entity_file(main_alias)
+            if main_alias == 'J. K. Rowling':
+                file_k = 'J._K._Rowling.txt'
+                main_alias = 'J.K. Rowling'
+            if main_alias == 'Sagrada Família':
+                file_k = 'Sagrada_Família.txt'
+                main_alias = 'Sagrada Familia'
+            sub_folder = re.sub("[^A-Za-z0-9]", '_', main_alias).lower()
+            if args.language == 'it':
+                if main_alias == 'città':
+                    file_k = 'Città.txt'
+                    #main_alias = 'Città'
+                if main_alias == "massa d'acqua":
+                    file_k = "Massa_d'acqua.txt"
+                    #main_alias = 'Sagrada Familia'
+                if main_alias == "Madonna":
+                    file_k = "Madonna_(cantante).txt"
 
-            current_folder = os.path.join(corpus_folder, sub_folder[:1], sub_folder[:2], sub_folder[:3])
-        else:
-            if main_alias == "Madonna":
-                file_k = "Madonna_(entertainer).txt"
-            current_folder = os.path.join(corpus_folder, sub_folder[:3])
+                current_folder = os.path.join(corpus_folder, sub_folder[:1], sub_folder[:2], sub_folder[:3])
+            else:
+                if main_alias == "Madonna":
+                    file_k = "Madonna_(entertainer).txt"
+                current_folder = os.path.join(corpus_folder, sub_folder[:3])
 
-            #print(file_k)
-            #print(current_folder)
-        assert os.path.exists(current_folder)
-        file_path = os.path.join(current_folder, file_k)
-        try:
-            #print(file_path)
-            assert os.path.exists(file_path)
-            #shutil.copy(file_path, articles_path)
-            with open(file_path) as i:
-                lines = [l.strip() for l in i.readlines()]
-            assert len(lines) > 0
-            files[k] = lines
-        except AssertionError:
-            print(main_alias)
-            print([k, file_k])
-            print(file_path)
-            #import pdb; pdb.set_trace()
-            marker = True
-        aliases[k] = [main_alias]
-        if len(k.split()) > 1:
-            aliases[k].append(k.split()[-1])
-        if args.language in ent_dict['aliases'].keys():
-            for al in ent_dict['aliases'][args.language]:
-                aliases[k].append(al['value'])
+                #print(file_k)
+                #print(current_folder)
+            assert os.path.exists(current_folder)
+            file_path = os.path.join(current_folder, file_k)
+            try:
+                #print(file_path)
+                assert os.path.exists(file_path)
+                #shutil.copy(file_path, articles_path)
+                with open(file_path) as i:
+                    lines = [l.strip() for l in i.readlines()]
+                assert len(lines) > 0
+                files[k] = lines
+            except AssertionError:
+                print(main_alias)
+                print([k, file_k])
+                print(file_path)
+                #import pdb; pdb.set_trace()
+                marker = True
+            aliases[k] = [main_alias]
+            if len(k.split()) > 1:
+                aliases[k].append(k.split()[-1])
+            if args.language in ent_dict['aliases'].keys():
+                for al in ent_dict['aliases'][args.language]:
+                    aliases[k].append(al['value'])
+        aliases = {k : sorted(v, key=lambda item : len(item), reverse=True) for k, v in aliases.items()}
+        all_sentences = {k : list() for k in aliases.keys()}
+        if marker:
+            raise RuntimeError('Some names are not correctly written!')
+    else:
+        corpus_folder = read_sentences_folder(args)
+        all_sentences = dict()
+        with open(os.path.join(corpus_folder, '{}.sentences'.format(args.corpus_portion))) as i:
+            for l in i.readlines():
+                k = l.strip().split('\t')[0]
+                line = l.strip().split('\t')[1]
+                if k not in all_sentences.keys():
+                    all_sentences[k] = [line]
+                else:
+                    all_sentences[k].append(line)
+        max_n = 1000
+        all_sentences = {k : random.sample(v, k=min(max_n, len(v))) for k, v in all_sentences.items()}
 
-    aliases = {k : sorted(v, key=lambda item : len(item), reverse=True) for k, v in aliases.items()}
-
-    all_sentences = {k : list() for k in aliases.keys()}
-
-    if marker:
-        raise RuntimeError('Some names are not correctly written!')
 
     formula_one = '(?<=\[\[)(.+?)\|.+?(?=\]\])'
     formula_two = '(?<=\[\[)(.+?)(?=\]\])'
     for key in tqdm(aliases.keys()):
         lines = files[key]
         for line in lines:
-            if args.model != 'w2v_sentence':
-                line = re.sub(formula_one, r'\1', line)
-                line = re.sub('\[|\]', '', line)
+            if args.experiment_id == 'two':
+                if args.model != 'w2v_sentence':
+                    line = re.sub(formula_one, r'\1', line)
+                    line = re.sub('\[|\]', '', line)
+            else:
+                if args.model not in ['ITGPT2medium', 'MBERT', 'BERT_large', 'xlm-roberta-large', 'gpt2-large']:
+                    line = re.sub(formula_one, r'\1', line)
+                    line = re.sub('\[|\]', '', line)
             if len(line.split()) > 5:
                 all_sentences[key].append(line)
 
