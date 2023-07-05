@@ -8,6 +8,7 @@ import os
 import re
 import scipy
 import shutil
+import spacy
 import sklearn
 import torch
 
@@ -21,8 +22,7 @@ from tqdm import tqdm
 
 from transformers import AutoModel, AutoTokenizer, AutoModelForMaskedLM, AutoModelWithLMHead
 
-#from utils import load_comp_model_name, load_vec_files, read_args, read_full_wiki_vectors, read_sentences_folder, return_entity_file, read_entity_sentences
-from utils import load_comp_model_name, load_vec_files, read_args, read_entity_sentences, read_full_wiki_vectors, read_sentences_folder
+from utils import layers, load_comp_model_name, load_vec_files, read_args, read_brain_data, read_entity_sentences, read_full_wiki_vectors, read_sentences_folder
 from exp_two_utils import read_personally_familiar_sentences
 
 def sensible_finder(all_args):
@@ -44,10 +44,11 @@ def sensible_finder(all_args):
 args = read_args(vector_extraction=True, contextualized_selection=True)
 if args.experiment_id == 'two' and args.corpus_portion != 'entity_sentences':
     raise(RuntimeError)
+brain_data = read_brain_data(args)
 
 model_name, computational_model, out_shape = load_comp_model_name(args)
 
-vecs_file, rankings_folder = load_vec_files(args, computational_model)
+vecs_file, rankings_folder, repl_file = load_vec_files(args, computational_model)
 sent_len_threshold = 20 
 
 original_sentences = read_entity_sentences(args)
@@ -75,6 +76,29 @@ for sub in range(1, 34):
     pers_lengths = {'{:02}_{}'.format(sub, k) : ((1-.1)*(((len([tok for sent in v for tok in sent.split()])-min(lengths))/(max(lengths)-min(lengths)))))-1. for k, v in all_sentences.items()}
     #pers_lengths = {'{:02}_{}'.format(sub, k) : (2.*(((len([tok for sent in v for tok in sent.split()])-min(lengths))/(max(lengths)-min(lengths)))))-1. for k, v in all_sentences.items()}
     all_lengths.update(pers_lengths)
+
+if args.corpus_portion == 'entity_sentences':
+    if args.language == 'it':
+        spacy_model = spacy.load("it_core_news_lg")
+    if args.language == 'en':
+        spacy_model = spacy.load("en_core_web_lg")
+    relevant_pos = [
+               'ADJ', 
+               'ADV', 
+               'NOUN', 
+               'PROPN', 
+               'VERB',
+               #'X',
+               'NUM',
+               'AUX',
+               ]
+    to_be_ignored = [
+                     'OTHER_NAME', 
+                     'STREET_NAME', 
+                     'PERSON_NAME', 
+                     'PROPER_NAME', 
+                     'PEOPLE_NAME'
+                     ]
 
 if args.experiment_id == 'two':
     formula_one = '(?<=\[\[)(.+?)\|.+?(?=\]\])'
@@ -152,130 +176,149 @@ else:
     required_shape = model.config.hidden_size
     max_len = model.config.max_position_embeddings
     n_layers = model.config.num_hidden_layers
-tokenizer = AutoTokenizer.from_pretrained(model_name, sep_token='[SEP]', max_length=None, truncation=True)
+tokenizer = AutoTokenizer.from_pretrained(
+                    model_name, 
+                    sep_token='[SEP]', 
+                    #max_length=None, 
+                    max_length=max_len,
+                    truncation=True
+                    )
 
 print('Dimensionality: {}'.format(required_shape))
 print('Number of layers: {}'.format(n_layers))
 
-max_len = max_len - 10
 entity_vectors = dict()
+layer_start, layer_end = layers(args, n_layers)
 
 ### encoding all sentences
 with tqdm() as pbar:
     for stimulus, stim_sentences in all_sentences.items():
+        counter = 0
         entity_vectors[stimulus] = list()
         assert len(stim_sentences) >= 1
         for l_i, l in enumerate(stim_sentences):
             if len(l.strip()) == 0:
                 continue
-            inputs = tokenizer(l, return_tensors="pt")
 
-            if len(tokenizer.tokenize(l)) > max_len:
-                #entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), l))
-                continue
-            try:
-                inputs = tokenizer(l, return_tensors="pt").to(cuda_device)
-            except RuntimeError:
-                print('input error')
-                print(l)
-                #entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), l))
-                continue
-            try:
-                outputs = model(**inputs, output_attentions=False, \
-                                output_hidden_states=True, return_dict=True)
-            except RuntimeError:
-                print('output error')
-                print(l)
-                #entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), l))
-                continue
+            if args.debugging:
+                counter += 1
+                if counter > 10:
+                    continue
 
-            hidden_states = numpy.array([s[0].cpu().detach().numpy() for s in outputs['hidden_states']])
-            #last_hidden_states = numpy.array([k.detach().numpy() for k in outputs['hidden_states']])[2:6, 0, :]
-            if '_bert' in args.model.lower():
-                beg = 1
-            else:
-                beg = 0
-            if len(re.findall('\W$', l)) > 0:
-                end = -1
-            else:
-                end = len(tokenizer.tokenize(l))
-            print(tokenizer.tokenize(l)[beg:end])
-            ### If there are less than two tokens that must be a mistake
-            if len(tokenizer.tokenize(l)[beg:end]) < 1:
-                #entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), l))
-                print(len(tokenizer.tokenize(l)))
-                print('\nERROR {}\n'.format(l))
-                print(tokenizer.tokenize(l)[beg:end])
-                continue
-            mention = hidden_states[:, beg:end, :]
-            mention = numpy.average(mention, axis=1)
-            if args.layer == 'low_four':
-                layer_start = 1
-                ### outputs has at dimension 0 the final output
-                layer_end = 5
-            if args.layer == 'low_six':
-                layer_start = 1
-                ### outputs has at dimension 0 the final output
-                layer_end = 7
-            if args.layer == 'low_twelve':
-                layer_start = 1
-                ### outputs has at dimension 0 the final output
-                layer_end = 13
-            if args.layer == 'mid_four':
-                layer_start = int(n_layers/2)-2
-                layer_end = int(n_layers/2)+3
-            if args.layer == 'mid_six':
-                layer_start = int(n_layers/2)-3
-                layer_end = int(n_layers/2)+4
-            if args.layer == 'mid_twelve':
-                layer_start = int(n_layers/2)-6
-                layer_end = int(n_layers/2)+7
-            if args.layer == 'upper_four':
-                layer_start = int(n_layers/2)
-                layer_end = int(n_layers/2)+5
-            if args.layer == 'upper_six':
-                layer_start = int(n_layers/2)
-                layer_end = int(n_layers/2)+7
-            if args.layer == 'cotoletta_eight':
-                layer_start = int(n_layers/2)+int(int(n_layers/2)/2)-4
-                layer_end = int(n_layers/2)+int(int(n_layers/2)/2)+5
-            if args.layer == 'cotoletta_six':
-                layer_start = int(n_layers/2)+int(int(n_layers/2)/2)-3
-                layer_end = int(n_layers/2)+int(int(n_layers/2)/2)+4
-            if args.layer == 'cotoletta_four':
-                layer_start = int(n_layers/2)+int(int(n_layers/2)/2)-2
-                layer_end = int(n_layers/2)+int(int(n_layers/2)/2)+3
-            if args.layer == 'top_four':
-                layer_start = -4
-                ### outputs has at dimension 0 the final output
-                layer_end = n_layers+1
-            if args.layer == 'top_six':
-                layer_start = -6
-                ### outputs has at dimension 0 the final output
-                layer_end = n_layers+1
-            if args.layer == 'top_two':
-                layer_start = -2
-                ### outputs has at dimension 0 the final output
-                layer_end = n_layers+1
-            if args.layer == 'top_one':
-                layer_start = -1
-                ### outputs has at dimension 0 the final output
-                layer_end = n_layers+1
-            if args.layer == 'top_twelve':
-                layer_start = -12
-                ### outputs has at dimension 0 the final output
-                layer_end = n_layers+1
-            if args.layer == 'top_eight':
-                layer_start = -8
-                layer_end = n_layers+1
-            mention = mention[layer_start:layer_end, :]
+            ### finding out where the context words are
 
-            mention = numpy.average(mention, axis=0)
-            assert mention.shape == (required_shape, )
-            entity_vectors[stimulus].append((mention, l))
-            pbar.update(1)
+            ### finding out the words
+            spacy_line = spacy_model(l)
+            new_line = ''
+            ### words
+            for tok in spacy_line:
+                if len(tok.text) < 3:
+                    new_line = '{} {}'.format(new_line, tok.text)
+                elif (tok.pos_ not in relevant_pos and '_' not in tok.text) or tok.text in to_be_ignored:
+                    #print((tok.pos_, tok.text))
+                    new_line = '{} {}'.format(new_line, tok.text)
+                    #continue
+                else:
+                    new_line = '{} [SEP] {} [SEP]'.format(new_line, tok.text)
+            new_inputs = tokenizer(new_line, return_tensors="pt")
+            spans = [i_i for i_i, i in enumerate(new_inputs['input_ids'].numpy().reshape(-1)) if 
+                    i==tokenizer.convert_tokens_to_ids(['[SEP]'])[0]]
+            if 'bert' in model_name and len(spans)%2==1:
+                spans = spans[:-1]
+            #if 'bert' in model_name:
+            #    spans = spans[1:-1]
+            assert len(spans) % 2 == 0
 
-### writing to file the vectors
+            spacy_txt = ' '.join(['{}'.format(tok.text) for tok in spacy_line])
+
+            if len(spans) > 1:
+                tkz = list()
+                corr_spans = list()
+                for tok in new_inputs['input_ids'][0]:
+                    if tok == tokenizer.convert_tokens_to_ids(['[SEP]'])[0]:
+                        corr_spans.append(len(tkz))
+                    else:
+                        tkz.append(tok)
+                split_spans = list()
+                for i in list(range(len(corr_spans)))[::2]:
+                    current_span = (corr_spans[i], corr_spans[i+1])
+                    split_spans.append(current_span)
+
+                if len(split_spans) > 0:
+            
+                    #old_inputs = tokenizer(spacy_txt, return_tensors="pt")
+
+                    ### tokenizing inputs
+                    inputs = tokenizer(
+                                       spacy_txt, 
+                                       return_tensors="pt", 
+                                       truncation=True
+                                       ).to(cuda_device)
+
+                    ### checking words
+                    words = [tokenizer.convert_ids_to_tokens(inputs['input_ids'][0].cpu().detach()[beg:end]) for beg, end in split_spans]
+                    print(words)
+
+                    ### encoding words
+                    outputs = model(
+                                    **inputs, 
+                                    output_attentions=False,
+                                    output_hidden_states=True, 
+                                    return_dict=True
+                                    )
+
+                    hidden_states = numpy.array(
+                                       [s[0].cpu().detach().numpy() for s in outputs['hidden_states']]
+                                           )
+                    '''
+                    if '_bert' in args.model.lower():
+                        beg = 1
+                    else:
+                        beg = 0
+                    if len(re.findall('\W$', l)) > 0:
+                        end = -1
+                    else:
+                        end = len(tokenizer.tokenize(l))
+                    print(tokenizer.tokenize(l)[beg:end])
+                    ### If there are less than two tokens that must be a mistake
+                    if len(tokenizer.tokenize(l)[beg:end]) < 1:
+                        #entity_vectors[stimulus].append((numpy.zeros(shape=out_shape), l))
+                        print(len(tokenizer.tokenize(l)))
+                        print('\nERROR {}\n'.format(l))
+                        print(tokenizer.tokenize(l)[beg:end])
+                        continue
+                    mention = hidden_states[:, beg:end, :]
+                    mention = numpy.average(mention, axis=1)
+                    mention = mention[layer_start:layer_end, :]
+
+                    mention = numpy.average(mention, axis=0)
+                    assert mention.shape == (required_shape, )
+                    entity_vectors[stimulus].append((mention, l))
+                    pbar.update(1)
+                    '''
+                    sentence_vectors = list()
+                    for beg, end in split_spans:
+                        if len(inputs['input_ids'][0][beg:end].cpu().detach()) < 1:
+                            print('\n\nERROR {}\n\n'.format(l))
+                            #import pdb; pdb.set_trace()
+                            continue
+                        ### spans
+                        mention = hidden_states[:, beg:end, :]
+                        mention = numpy.nanmean(mention, axis=1)
+                        ### layers
+                        mention = mention[layer_start:layer_end, :]
+                        mention = numpy.nanmean(mention, axis=0)
+                        assert mention.shape == (required_shape, )
+                        sentence_vectors.append(mention)
+                    print(
+                          'used {} tokens, against a total of {}'.format(
+                                    len(sentence_vectors), 
+                                    len(spacy_txt.split())
+                                    )
+                          )
+                    entity_vectors[stimulus].append((numpy.nanmean(sentence_vectors, axis=0), l))
+                    pbar.update(1)
+
 
 with open(vecs_file, 'w') as o:
     for stim, vecz in entity_vectors.items():
@@ -286,6 +329,30 @@ with open(vecs_file, 'w') as o:
                 print([stim, line])
             line = line.replace('\t', ' ')
             o.write('{}\t{}\t'.format(stim, line))
+            for dim in vec:
+                o.write('{}\t'.format(float(dim)))
+            o.write('\n')
+
+### writing to file the vectors
+
+with open(repl_file, 'w') as o:
+    o.write('subject\tentity\tvector\n')
+    for s, sub_data in tqdm(brain_data.items()):
+
+        current_entity_vectors = {k : v for k, v in entity_vectors.items() if k in sub_data.keys()}
+        for k, v in entity_vectors.items():
+            if '{:02}_'.format(s) in k:
+                current_entity_vectors[k.replace('{:02}_'.format(s), '')] = v
+        for stim, vecz in current_entity_vectors.items():
+            print([s, len(vecz)])
+            vec = numpy.nanmean([v[0] for v in vecz], axis=0)
+            #for vec, line in vecz:
+            try:
+                assert vec.shape == out_shape
+            except AssertionError:
+                print([stim, line])
+            #line = line.replace('\t', ' ')
+            o.write('{}\t{}\t'.format(s, stim))
             for dim in vec:
                 o.write('{}\t'.format(float(dim)))
             o.write('\n')

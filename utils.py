@@ -7,6 +7,68 @@ import re
 from qwikidata.linked_data_interface import get_entity_dict_from_api
 from tqdm import tqdm
 
+def layers(args, n_layers):
+    if args.layer == 'low_four':
+        layer_start = 1
+        ### outputs has at dimension 0 the final output
+        layer_end = 5
+    if args.layer == 'low_six':
+        layer_start = 1
+        ### outputs has at dimension 0 the final output
+        layer_end = 7
+    if args.layer == 'low_twelve':
+        layer_start = 1
+        ### outputs has at dimension 0 the final output
+        layer_end = 13
+    if args.layer == 'mid_four':
+        layer_start = int(n_layers/2)-2
+        layer_end = int(n_layers/2)+3
+    if args.layer == 'mid_six':
+        layer_start = int(n_layers/2)-3
+        layer_end = int(n_layers/2)+4
+    if args.layer == 'mid_twelve':
+        layer_start = int(n_layers/2)-6
+        layer_end = int(n_layers/2)+7
+    if args.layer == 'upper_four':
+        layer_start = int(n_layers/2)
+        layer_end = int(n_layers/2)+5
+    if args.layer == 'upper_six':
+        layer_start = int(n_layers/2)
+        layer_end = int(n_layers/2)+7
+    if args.layer == 'cotoletta_eight':
+        layer_start = int(n_layers/2)+int(int(n_layers/2)/2)-4
+        layer_end = int(n_layers/2)+int(int(n_layers/2)/2)+5
+    if args.layer == 'cotoletta_six':
+        layer_start = int(n_layers/2)+int(int(n_layers/2)/2)-3
+        layer_end = int(n_layers/2)+int(int(n_layers/2)/2)+4
+    if args.layer == 'cotoletta_four':
+        layer_start = int(n_layers/2)+int(int(n_layers/2)/2)-2
+        layer_end = int(n_layers/2)+int(int(n_layers/2)/2)+3
+    if args.layer == 'top_four':
+        layer_start = -4
+        ### outputs has at dimension 0 the final output
+        layer_end = n_layers+1
+    if args.layer == 'top_six':
+        layer_start = -6
+        ### outputs has at dimension 0 the final output
+        layer_end = n_layers+1
+    if args.layer == 'top_two':
+        layer_start = -2
+        ### outputs has at dimension 0 the final output
+        layer_end = n_layers+1
+    if args.layer == 'top_one':
+        layer_start = -1
+        ### outputs has at dimension 0 the final output
+        layer_end = n_layers+1
+    if args.layer == 'top_twelve':
+        layer_start = -12
+        ### outputs has at dimension 0 the final output
+        layer_end = n_layers+1
+    if args.layer == 'top_eight':
+        layer_start = -8
+        layer_end = n_layers+1
+    return layer_start, layer_end
+
 def read_sentences_folder(args):
 
     out_folder = os.path.join(
@@ -131,7 +193,7 @@ def read_args(vector_extraction=False, contextualized_selection=False):
     parser.add_argument('--static_sentences', action='store_true')
     parser.add_argument('--all_vectors', action='store_true')
     parser.add_argument('--one', action='store_true')
-    parser.add_argument('--average', choices=[-12, 24], type=int, required=True)
+    #parser.add_argument('--average', choices=[-12, 24], type=int, required=True)
     if vector_extraction:
         parser.add_argument('--cuda', choices=['0', '1', '2',
                                                ],
@@ -144,8 +206,8 @@ def read_args(vector_extraction=False, contextualized_selection=False):
                 '300-500ms',
                 '500-800ms',
                 ]
-        parser.add_argument('--time_window', choices=times_and_labels, 
-                            required=True)
+        #parser.add_argument('--time_window', choices=times_and_labels, 
+        #                    required=True)
     parser.add_argument('--individuals', action='store_true')
     parser.add_argument('--predicted', action='store_true')
     parser.add_argument('--random', action='store_true')
@@ -187,6 +249,24 @@ def read_full_wiki_vectors(vecs_file, out_shape):
 
 def load_vec_files(args, computational_model):
 
+    os.makedirs(
+                'replication_models', 
+                exist_ok=True
+               )
+
+    repl_file = os.path.join(
+                             'replication_models',
+                             'exp_{}_{}_{}_{}_content_all_vectors.tsv'.format(
+                                      args.experiment_id, 
+                                      args.model, 
+                                      args.language, 
+                                      args.corpus_portion,
+                                      )
+                                    )
+
+
+
+
     base_folder = os.path.join(
                               'contextualized_vector_selection', 
                               args.corpus,
@@ -218,13 +298,13 @@ def load_vec_files(args, computational_model):
         rankings_folder = os.path.join(
                                   base_folder,
                                   'rankings',
-                                  'average_{}'.format(args.average),
-                                  args.time_window,
+                                  #'average_{}'.format(args.average),
+                                  #args.time_window,
                                   )
 
         os.makedirs(rankings_folder, exist_ok=True)
 
-    return vecs_file, rankings_folder
+    return vecs_file, rankings_folder, repl_file
 
 def read_brain_data(args):
     ### now ranking sentences for each subject!
@@ -232,10 +312,10 @@ def read_brain_data(args):
     brain_data_file = os.path.join(
                                    'brain_data', 
                                    args.experiment_id, 
-                                   'rough_and_ready_exp_{}_average_{}_{}.eeg'.format(
+                                   'rough_and_ready_exp_{}_average_24_300-500ms.eeg'.format(
                                                                  args.experiment_id, 
-                                                                 args.average, 
-                                                                 args.time_window
+                                                                 #args.average, 
+                                                                 #args.time_window
                                                                  )
                                    )
     assert os.path.exists(brain_data_file)
