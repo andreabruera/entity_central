@@ -322,7 +322,7 @@ with open(vecs_file, 'w') as o:
             o.write('\n')
 '''
 
-### writing to file the vectors
+### writing to file the averaged vectors
 
 with open(repl_file, 'w') as o:
     o.write('subject\tentity\tvector\n')
