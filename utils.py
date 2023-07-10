@@ -190,27 +190,55 @@ def read_args(vector_extraction=False, contextualized_selection=False):
                                             ],
                         required=True, help='Which model?')
     parser.add_argument('--debugging', action='store_true')
-    parser.add_argument('--static_sentences', action='store_true')
-    parser.add_argument('--all_vectors', action='store_true')
-    parser.add_argument('--one', action='store_true')
-    #parser.add_argument('--average', choices=[-12, 24], type=int, required=True)
-    if vector_extraction:
-        parser.add_argument('--cuda', choices=['0', '1', '2',
-                                               ],
-                            required=True, help='Which cuda device?')
-    if contextualized_selection:
 
-        times_and_labels = [
-                '0-200ms',
-                '200-300ms',
-                '300-500ms',
-                '500-800ms',
-                ]
-        #parser.add_argument('--time_window', choices=times_and_labels, 
-        #                    required=True)
-    parser.add_argument('--individuals', action='store_true')
-    parser.add_argument('--predicted', action='store_true')
-    parser.add_argument('--random', action='store_true')
+    ### only required when extracting vectors
+    if vector_extraction:
+        parser.add_argument(
+                            '--cuda', 
+                            choices=['0', '1', '2',
+                                               ],
+                            required=True, 
+                            help='Which cuda device?'
+                            )
+        parser.add_argument(
+                            '--words_used',
+                            choices=[
+                                     'all', 
+                                     'content',
+                                     ],
+                            default='content_words',
+                            help='Averaging all words or just content words?'
+                            )
+        parser.add_argument(
+                            '--amount_vectors', 
+                            choices=[
+                                     'all', 
+                                     'ten', 
+                                     'hundred'
+                                     ],
+                            default='all',
+                            help='How many vectors to use?',
+                            )
+
+    ### only required when selecting best vectors
+    if contextualized_selection:
+        parser.add_argument('--static_sentences', action='store_true')
+        parser.add_argument('--one', action='store_true')
+        #parser.add_argument('--average', choices=[-12, 24], type=int, required=True)
+        if contextualized_selection:
+
+            times_and_labels = [
+                    '0-200ms',
+                    '200-300ms',
+                    '300-500ms',
+                    '500-800ms',
+                    ]
+            #parser.add_argument('--time_window', choices=times_and_labels, 
+            #                    required=True)
+        parser.add_argument('--individuals', action='store_true')
+        parser.add_argument('--predicted', action='store_true')
+        parser.add_argument('--random', action='store_true')
+
     args = parser.parse_args()
     
 
@@ -256,11 +284,13 @@ def load_vec_files(args, computational_model):
 
     repl_file = os.path.join(
                              'replication_models',
-                             'exp_{}_{}_{}_{}_content_all_vectors.tsv'.format(
+                             'exp_{}_{}_{}_{}_{}_words_{}_vectors.tsv'.format(
                                       args.experiment_id, 
-                                      args.model, 
+                                      args.model,
                                       args.language, 
                                       args.corpus_portion,
+                                      args.words_used,
+                                      args.amount_vectors
                                       )
                                     )
 
@@ -286,7 +316,7 @@ def load_vec_files(args, computational_model):
                             vecs_folder, 
                             'all.vectors'
                             )
-    if args.individuals or args.random or args.all_vectors or args.one:
+    if args.individuals or args.random or args.one:
         rankings_folder = os.path.join(
                                   base_folder,
                                   'rankings',
@@ -338,7 +368,7 @@ def read_entity_sentences(args):
         ent_lines = [l.strip().split('\t') for l in i.readlines()]
     for l_i, l in enumerate(ent_lines):
         if l_i == 0:
-            print(l)
+            #print(l)
             assert l[0] == 'entity'
             assert l[1] == 'wikidata_id'
         assert len(l) == 2
@@ -444,3 +474,20 @@ def read_entity_sentences(args):
                 all_sentences[key].append(line)
 
     return all_sentences
+
+def write_vectors(o, current_entity_vectors, s, out_shape):
+
+    for stim, vecz in current_entity_vectors.items():
+        print([stim, s, len(vecz)])
+        print([stim, s, set([v[0].shape for v in vecz])])
+        vec = numpy.nanmean([v[0] for v in vecz], axis=0)
+        #for vec, line in vecz:
+        #try:
+        assert vec.shape == out_shape
+        #except AssertionError:
+        #    print([stim, line])
+        #line = line.replace('\t', ' ')
+        o.write('{}\t{}\t'.format(s, stim))
+        for dim in vec:
+            o.write('{}\t'.format(float(dim)))
+        o.write('\n')
