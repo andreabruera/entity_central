@@ -77,7 +77,8 @@ files = dict()
 out_folder = read_sentences_folder(args)
 
 if args.corpus == 'wikipedia':
-    corpus_folder = os.path.join('/', 'import', 'cogsci',
+    corpus_folder = os.path.join(
+                                 '/', 'import', 'cogsci',
                                  'andrea', 'dataset', 
                                  'corpora', 
                                  'wikipedia_{}'.format(args.language),
@@ -85,11 +86,14 @@ if args.corpus == 'wikipedia':
                                  #'wexea_annotated_wiki', 'clean_articles'
                              )
 if args.corpus == 'opensubtitles':
-    corpus_folder = os.path.join('/', 'import', 'cogsci',
+    corpus_folder = os.path.join(
+                                 '/', 'import', 'cogsci',
                                  'andrea', 'dataset', 
                                  'corpora', 
                                  #'opensubs_it_ready'
-                                 'OpenSubtitles', 'opensubtitles-parser', 'first_pass'
+                                 'OpenSubtitles', 
+                                 'opensubtitles-parser', 
+                                 'first_pass'
                                  )
 assert os.path.exists(corpus_folder)
 articles_path = os.path.join(
